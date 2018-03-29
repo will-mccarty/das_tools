@@ -1,6 +1,7 @@
 import numpy as np
 import datetime as dt
 import netCDF4 as nc4
+import ncdiag_functions as ncf
 
 varmap = { 
     'lat':   'Latitude'         ,
@@ -9,7 +10,7 @@ varmap = {
     'used':  'Analysis_Use_Flag',
     'pres':  'Pressure',
     'ob':    'Observation',
-    'obs':    'Observation',
+    'obs':   'Observation',
     'omf':   'Obs_Minus_Forecast_adjusted',
     'omfbc': 'Obs_Minus_Forecast_adjusted',
     'omfnbc':'Obs_Minus_Forecast_unadjusted',
@@ -19,6 +20,13 @@ varmap = {
     'ichan': 'Channel_Index',
     'qcmark': 'QC_Flag',
     'chused': 'use_flag'}
+
+derived_var = {
+    'amb':         {'func': ncf.amb,          'deps': ['omf','oma']},
+    'sigo_input':  {'func': ncf.sigo_input,   'deps': ['Errinv_Input']},
+    'sigo_final':  {'func': ncf.sigo_final,   'deps': ['Errinv_Final']},
+    'sigo':        {'func': ncf.sigo_final,   'deps': ['Errinv_Final']} 
+    }
 
 def var_to_var(in_var):
     if (in_var in varmap):
@@ -68,7 +76,6 @@ class obs():
 
         self.mask=eval(newlogic)
 
-
     def v(self, in_var,masked=None):
         if masked is True and self.mask is None:
             raise ValueError('Masked is asked for, but no mask is set - use self.set_mask')
@@ -78,17 +85,27 @@ class obs():
         else:
             msk = masked
 
+        derived = in_var in derived_var
+        if (derived):
+            vars = derived_var[in_var]['deps']
+        else:
+            vars = [in_var]
+
+        for cvar in vars:
+            var = var_to_var(cvar)
+            try:
+                self.data[var] = self.nc4.variables[var][...]
+            except:
+                raise ValueError('Field {} not in file'.format(var))
+
         var = var_to_var(in_var)
-        try:
-            self.data[var] = self.nc4.variables[var][...]
-            if (msk):
-                return(self.data[var][self.mask])
-            else:
-                return(self.data[var])
+        if (derived):
+            self.data[var] = derived_var[var]['func'](data=self.data)
 
-        except:
-            raise ValueError('Field {} not in file'.format(var))
-
+        if (msk):
+            return(self.data[var][self.mask])
+        else:
+            return(self.data[var])
 
 class obs_template():
     
