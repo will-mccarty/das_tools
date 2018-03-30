@@ -28,6 +28,11 @@ derived_var = {
     'sigo':        {'func': ncf.sigo_final,   'deps': ['Errinv_Final']} 
     }
 
+stats = {
+    'mean':        {'func': np.mean,          'deps': None} ,
+    'cpen':        {'func': ncf.cpen,         'deps': ['sigo']}
+    }
+
 def var_to_var(in_var):
     if (in_var in varmap):
         var = varmap[in_var]
@@ -107,7 +112,27 @@ class obs():
         else:
             return(self.data[var])
 
-class obs_template():
+    def stat(self,stat,var,masked=None):
+        if masked is True and self.mask is None:
+            raise ValueError('Masked is asked for, but no mask is set - use self.set_mask')
+
+        if (masked is None):
+            msk = self.mask_enabled
+        else:
+            msk = masked
+ 
+        dep_dict = {}
+
+        if stats[stat]['deps'] is not None:
+            for dep in stats[stat]['deps']:
+                dep_dict[dep] = self.v(dep)
+            value = stats[stat]['func'](self.v(var),dep=dep_dict)
+        else:
+            value = stats[stat]['func'](self.v(var)) 
+
+        return(value)
+
+class obs_template(obs):
     
 
     def __init__(self, fn_tmpl, startdate=None, enddate=None, verbose=False, reallyverbose=False):
@@ -127,8 +152,7 @@ class obs_template():
     def set_mask(self, logic):
         self.mask_logic = logic
 
-    def use_mask(self, msk):
-        self.mask_enabled = msk
+# use_mask inhereted from obs
 
     def fn_from_tmpl(self, dattim):
         from string import Template
