@@ -17,6 +17,14 @@ varmap = {
     'oma':   'Obs_Minus_Analysis_adjusted',
     'omabc': 'Obs_Minus_Analysis_adjusted',
     'omanbc':'Obs_Minus_Analysis_unadjusted',
+    'u_obs':  'u_Observation',
+    'u_omf':   'u_Obs_Minus_Forecast_adjusted',
+    'u_omfbc': 'u_Obs_Minus_Forecast_adjusted',
+    'u_omfnbc':'u_Obs_Minus_Forecast_unadjusted',
+    'v_obs':  'v_Observation',
+    'v_omf':   'v_Obs_Minus_Forecast_adjusted',
+    'v_omfbc': 'v_Obs_Minus_Forecast_adjusted',
+    'v_omfnbc':'v_Obs_Minus_Forecast_unadjusted',
     'ichan': 'Channel_Index',
     'qcmark': 'QC_Flag',
     'chused': 'use_flag'}
@@ -25,7 +33,11 @@ derived_var = {
     'amb':         {'func': ncf.amb,          'deps': ['omf','oma']},
     'sigo_input':  {'func': ncf.sigo_input,   'deps': ['Errinv_Input']},
     'sigo_final':  {'func': ncf.sigo_final,   'deps': ['Errinv_Final']},
-    'sigo':        {'func': ncf.sigo_final,   'deps': ['Errinv_Final']} 
+    'sigo':        {'func': ncf.sigo_final,   'deps': ['Errinv_Final']},
+    'dist':        {'func': ncf.dist,         'deps': ['lon','lat']},
+    'rand':        {'func': ncf.rand,         'deps': ['lon']},
+    'station':     {'func': ncf.station,      'deps': ['Station_ID']},
+    'spd_omf':     {'func': ncf.spd_omf,      'deps': ['u_obs','v_obs','u_omf','v_omf']}
     }
 
 stats = {
@@ -49,11 +61,23 @@ def getFields(text):
 
 class obs():
 
-    def __init__(self, fn, date=None, mask=None, verbose=False, reallyverbose=False):
+    def __init__(self, fn, date=None, mask=None, verbose=False, reallyverbose=False, in_data=None):
         self.fn = fn
         self.nc4 = nc4.Dataset(self.fn)
         self.data = { 'fn':   self.fn,
-                      'date': date   } 
+                      'date': date   ,
+                      'centroid_lat': None,
+                      'centroid_lon': None}
+        for key in derived_var:
+            self.data[key] = None
+
+        self.centroid_calculated = False
+        
+
+        if in_data is not None:
+           for key in in_data:
+               self.data[key] = in_data[key]
+
         if mask is None:
             self.mask = None
         else:
@@ -63,6 +87,10 @@ class obs():
         self.verbose = verbose
         self.reallyverbose = reallyverbose
 
+    def set_centroid(self, lon, lat):
+        self.data['centroid_lon'] = lon
+        self.data['centroid_lat'] = lat 
+        self.data['dist'] = None
 
     def use_mask(self, msk):
         self.mask_enabled = msk
@@ -82,6 +110,8 @@ class obs():
         self.mask=eval(newlogic)
 
     def v(self, in_var,masked=None):
+        import warnings as warn
+
         if masked is True and self.mask is None:
             raise ValueError('Masked is asked for, but no mask is set - use self.set_mask')
 
@@ -104,7 +134,8 @@ class obs():
                 raise ValueError('Field {} not in file'.format(var))
 
         var = var_to_var(in_var)
-        if (derived):
+        
+        if (derived and self.data[var] is None):
             self.data[var] = derived_var[var]['func'](data=self.data)
 
         if (msk):
@@ -135,19 +166,23 @@ class obs():
 class obs_template(obs):
     
 
-    def __init__(self, fn_tmpl, startdate=None, enddate=None, verbose=False, reallyverbose=False):
+    def __init__(self, fn_tmpl, startdate=None, enddate=None, verbose=False, reallyverbose=False, hr_inc=6):
         import gmao_tools as gt
 
         self.fn_tmpl   = fn_tmpl
         if startdate is not None: self.startdate = startdate
         if enddate is not None:   self.enddate   = enddate
+        self.hr_inc=hr_inc
         self.verbose = verbose
         self.reallyverbose = reallyverbose 
 
+        
         self.mask_logic = None
         self.mask_enabled = None
 
         self.obdict = {}
+
+        self.data = {}
 
     def set_mask(self, logic):
         self.mask_logic = logic
@@ -164,8 +199,13 @@ class obs_template(obs):
                         hh=dattim.strftime('%H'))
         return(res)
 
+    def set_centroid(self, lon, lat):
+        self.data['centroid_lon'] = lon
+        self.data['centroid_lat'] = lat
+        for cobd in self.obdict:
+            self.obdict[cobd].set_centroid(lon,lat)
 
-    def v(self, in_var, startdate=None, enddate=None, dates=None, hr_inc=6, masked=None):
+    def v(self, in_var, startdate=None, enddate=None, dates=None, hr_inc=None, masked=None):
         import gmao_tools as gt
 
         if (masked or self.mask_enabled) and self.mask_logic is None:
@@ -175,8 +215,11 @@ class obs_template(obs):
         else:
             msk = None
 
+        
+
         if startdate is None: startdate=self.startdate
         if enddate is None:   enddate=self.enddate 
+        if hr_inc is None:    hr_inc=self.hr_inc
 
         if (startdate is None and enddate is None and dates is None):
             raise ValueError('No dates are specified, unable to retrieve data')
@@ -200,7 +243,7 @@ class obs_template(obs):
 
             if fn not in self.obdict: 
                 if self.verbose: print('Opening {}'.format(fn))
-                self.obdict[fn] = obs(fn,date=dt,verbose=self.verbose, reallyverbose=self.reallyverbose)
+                self.obdict[fn] = obs(fn,date=dt,verbose=self.verbose, reallyverbose=self.reallyverbose, in_data=self.data)
             if msk is not None:
                 self.obdict[fn].set_mask(msk)
 

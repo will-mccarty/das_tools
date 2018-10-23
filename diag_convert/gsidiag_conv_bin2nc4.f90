@@ -6,7 +6,7 @@ program convert_and_split_conv_diag
    integer nargs, iargc, n
    character*256, allocatable ::   arg(:)
 
-   logical ncep, append_suffix
+   logical ncep, append_suffix, used
 
    type(diag_conv_header) :: hdr
    type(diag_conv_mass),dimension(:),allocatable   :: mass
@@ -20,12 +20,14 @@ program convert_and_split_conv_diag
    else
      ncep = .false.
      append_suffix = .false.
+     used = .false.
 
      allocate(arg(nargs))
      do n=1,nargs
        call getarg(n,arg(n))
      enddo
      do n=1,nargs
+       if (trim(arg(n)).eq.'-used'     ) used=.true.
        if (trim(arg(n)).eq.'-ncep'     ) ncep=.true.
        if (trim(arg(n)).eq.'-append_suffix') append_suffix=.true.
      enddo
@@ -37,7 +39,7 @@ program convert_and_split_conv_diag
    call read_conv_diag(fn, hdr, mass, wind, nobs_mass, nobs_wind, ncep)
 
    print *,hdr%ObsType
-   call write_split_conv_diag_nc(fn, hdr, mass, wind, append_suffix)
+   call write_split_conv_diag_nc(fn, hdr, mass, wind, append_suffix, used)
 
 
 end

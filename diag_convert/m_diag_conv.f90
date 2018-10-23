@@ -302,12 +302,13 @@ contains
   end function get_obstype_index    
 
 
-  subroutine write_split_conv_diag_nc(infn,conv_header, conv_mass, conv_wind, append_suffix)
+  subroutine write_split_conv_diag_nc(infn,conv_header, conv_mass, conv_wind, append_suffix, used_only)
      character(120),                                                 intent(in)    :: infn
      type(diag_conv_header),                                         intent(in)    :: conv_header
      type(diag_conv_mass),dimension(conv_header%n_Observations_Mass),intent(in)    :: conv_mass
      type(diag_conv_wind),dimension(conv_header%n_Observations_Wind),intent(in)    :: conv_wind
      logical,                                                        intent(in)    :: append_suffix
+     logical,                                                        intent(in)    :: used_only
 
      character(120)  :: outfn
      character(20)   :: str, str2
@@ -331,58 +332,62 @@ contains
 
         if (conv_header%ObsType(itype) .eq. ' uv') then
            do i=1,conv_header%n_Observations_Wind
-              call nc_diag_metadata("Station_ID",              conv_wind(i)%Station_ID)
-              call nc_diag_metadata("Observation_Class",             conv_wind(i)%Observation_Class              )
-              call nc_diag_metadata("Observation_Type",              conv_wind(i)%Observation_Type               )
-              call nc_diag_metadata("Observation_Subtype",           conv_wind(i)%Observation_Subtype            )
-              call nc_diag_metadata("Latitude",                      conv_wind(i)%Latitude                       )
-              call nc_diag_metadata("Longitude",                     conv_wind(i)%Longitude                      )
-              call nc_diag_metadata("Station_Elevation",             conv_wind(i)%Station_Elevation              )
-              call nc_diag_metadata("Pressure",                      conv_wind(i)%Pressure                       )
-              call nc_diag_metadata("Height",                        conv_wind(i)%Height                         )
-              call nc_diag_metadata("Time",                          conv_wind(i)%Time                           )
-              call nc_diag_metadata("Prep_QC_Mark",                  conv_wind(i)%Prep_QC_Mark                   )
-              call nc_diag_metadata("Setup_QC_Mark",                 conv_wind(i)%Setup_QC_Mark                  )
-              call nc_diag_metadata("Prep_Use_Flag",                 conv_wind(i)%Prep_Use_Flag                  )
-              call nc_diag_metadata("Analysis_Use_Flag",             conv_wind(i)%Analysis_Use_Flag              )
-              call nc_diag_metadata("Nonlinear_QC_Rel_Wgt",          conv_wind(i)%Nonlinear_QC_Rel_Wgt           )
-              call nc_diag_metadata("Errinv_Input",                  conv_wind(i)%Errinv_Input                   )
-              call nc_diag_metadata("Errinv_Adjust",                 conv_wind(i)%Errinv_Adjust                  )
-              call nc_diag_metadata("Errinv_Final",                  conv_wind(i)%Errinv_Final                   )
-              call nc_diag_metadata("u_Observation",                   conv_wind(i)%u_Observation                    )
-              call nc_diag_metadata("u_Obs_Minus_Forecast_adjusted",   conv_wind(i)%u_Obs_Minus_Forecast_adjusted    )
-              call nc_diag_metadata("u_Obs_Minus_Forecast_unadjusted", conv_wind(i)%u_Obs_Minus_Forecast_unadjusted  )
-              call nc_diag_metadata("v_Observation",                   conv_wind(i)%v_Observation                    )
-              call nc_diag_metadata("v_Obs_Minus_Forecast_adjusted",   conv_wind(i)%v_Obs_Minus_Forecast_adjusted    )
-              call nc_diag_metadata("v_Obs_Minus_Forecast_unadjusted", conv_wind(i)%v_Obs_Minus_Forecast_unadjusted  )
-              call nc_diag_metadata("Wind_Reduction_Factor_at_10m",    conv_wind(i)%Wind_Reduction_Factor_at_10m     )
+              if ((.not. used_only) .or. (used_only .and. conv_wind(i)%Analysis_Use_Flag .eq. 1)) then 
+                 call nc_diag_metadata("Station_ID",              conv_wind(i)%Station_ID)
+                 call nc_diag_metadata("Observation_Class",             conv_wind(i)%Observation_Class              )
+                 call nc_diag_metadata("Observation_Type",              conv_wind(i)%Observation_Type               )
+                 call nc_diag_metadata("Observation_Subtype",           conv_wind(i)%Observation_Subtype            )
+                 call nc_diag_metadata("Latitude",                      conv_wind(i)%Latitude                       )
+                 call nc_diag_metadata("Longitude",                     conv_wind(i)%Longitude                      )
+                 call nc_diag_metadata("Station_Elevation",             conv_wind(i)%Station_Elevation              )
+                 call nc_diag_metadata("Pressure",                      conv_wind(i)%Pressure                       )
+                 call nc_diag_metadata("Height",                        conv_wind(i)%Height                         )
+                 call nc_diag_metadata("Time",                          conv_wind(i)%Time                           )
+                 call nc_diag_metadata("Prep_QC_Mark",                  conv_wind(i)%Prep_QC_Mark                   )
+                 call nc_diag_metadata("Setup_QC_Mark",                 conv_wind(i)%Setup_QC_Mark                  )
+                 call nc_diag_metadata("Prep_Use_Flag",                 conv_wind(i)%Prep_Use_Flag                  )
+                 call nc_diag_metadata("Analysis_Use_Flag",             conv_wind(i)%Analysis_Use_Flag              )
+                 call nc_diag_metadata("Nonlinear_QC_Rel_Wgt",          conv_wind(i)%Nonlinear_QC_Rel_Wgt           )
+                 call nc_diag_metadata("Errinv_Input",                  conv_wind(i)%Errinv_Input                   )
+                 call nc_diag_metadata("Errinv_Adjust",                 conv_wind(i)%Errinv_Adjust                  )
+                 call nc_diag_metadata("Errinv_Final",                  conv_wind(i)%Errinv_Final                   )
+                 call nc_diag_metadata("u_Observation",                   conv_wind(i)%u_Observation                    )
+                 call nc_diag_metadata("u_Obs_Minus_Forecast_adjusted",   conv_wind(i)%u_Obs_Minus_Forecast_adjusted    )
+                 call nc_diag_metadata("u_Obs_Minus_Forecast_unadjusted", conv_wind(i)%u_Obs_Minus_Forecast_unadjusted  )
+                 call nc_diag_metadata("v_Observation",                   conv_wind(i)%v_Observation                    )
+                 call nc_diag_metadata("v_Obs_Minus_Forecast_adjusted",   conv_wind(i)%v_Obs_Minus_Forecast_adjusted    )
+                 call nc_diag_metadata("v_Obs_Minus_Forecast_unadjusted", conv_wind(i)%v_Obs_Minus_Forecast_unadjusted  )
+                 call nc_diag_metadata("Wind_Reduction_Factor_at_10m",    conv_wind(i)%Wind_Reduction_Factor_at_10m     )
+              endif
            enddo
         else
            do i=1,conv_header%n_Observations_Mass
-               if (conv_mass(i)%Observation_Class .eq. conv_header%ObsType(itype) ) then
-                  call nc_diag_metadata("Station_ID",                    conv_mass(i)%Station_ID                           )
-                  call nc_diag_metadata("Observation_Class",             conv_mass(i)%Observation_Class              ) 
-                  call nc_diag_metadata("Observation_Type",              conv_mass(i)%Observation_Type               ) 
-                  call nc_diag_metadata("Observation_Subtype",           conv_mass(i)%Observation_Subtype            ) 
-                  call nc_diag_metadata("Latitude",                      conv_mass(i)%Latitude                       ) 
-                  call nc_diag_metadata("Longitude",                     conv_mass(i)%Longitude                      ) 
-                  call nc_diag_metadata("Station_Elevation",             conv_mass(i)%Station_Elevation              ) 
-                  call nc_diag_metadata("Pressure",                      conv_mass(i)%Pressure                       ) 
-                  call nc_diag_metadata("Height",                        conv_mass(i)%Height                         ) 
-                  call nc_diag_metadata("Time",                          conv_mass(i)%Time                           ) 
-                  call nc_diag_metadata("Prep_QC_Mark",                  conv_mass(i)%Prep_QC_Mark                   ) 
-                  call nc_diag_metadata("Setup_QC_Mark",                 conv_mass(i)%Setup_QC_Mark                  ) 
-                  call nc_diag_metadata("Prep_Use_Flag",                 conv_mass(i)%Prep_Use_Flag                  ) 
-                  call nc_diag_metadata("Analysis_Use_Flag",             conv_mass(i)%Analysis_Use_Flag              ) 
-                  call nc_diag_metadata("Nonlinear_QC_Rel_Wgt",          conv_mass(i)%Nonlinear_QC_Rel_Wgt           ) 
-                  call nc_diag_metadata("Errinv_Input",                  conv_mass(i)%Errinv_Input                   ) 
-                  call nc_diag_metadata("Errinv_Adjust",                 conv_mass(i)%Errinv_Adjust                  ) 
-                  call nc_diag_metadata("Errinv_Final",                  conv_mass(i)%Errinv_Final                   ) 
-                  call nc_diag_metadata("Observation",                   conv_mass(i)%Observation                    ) 
-                  call nc_diag_metadata("Obs_Minus_Forecast_adjusted",   conv_mass(i)%Obs_Minus_Forecast_adjusted    ) 
-                  call nc_diag_metadata("Obs_Minus_Forecast_unadjusted", conv_mass(i)%Obs_Minus_Forecast_unadjusted  ) 
-
-               endif
+              if (conv_mass(i)%Observation_Class .eq. conv_header%ObsType(itype) ) then
+                 if ((.not. used_only) .or. (used_only .and. conv_mass(i)%Analysis_Use_Flag .eq. 1)) then
+                    call nc_diag_metadata("Station_ID",                    conv_mass(i)%Station_ID                           )
+                    call nc_diag_metadata("Observation_Class",             conv_mass(i)%Observation_Class              ) 
+                    call nc_diag_metadata("Observation_Type",              conv_mass(i)%Observation_Type               ) 
+                    call nc_diag_metadata("Observation_Subtype",           conv_mass(i)%Observation_Subtype            ) 
+                    call nc_diag_metadata("Latitude",                      conv_mass(i)%Latitude                       ) 
+                    call nc_diag_metadata("Longitude",                     conv_mass(i)%Longitude                      ) 
+                    call nc_diag_metadata("Station_Elevation",             conv_mass(i)%Station_Elevation              ) 
+                    call nc_diag_metadata("Pressure",                      conv_mass(i)%Pressure                       ) 
+                    call nc_diag_metadata("Height",                        conv_mass(i)%Height                         ) 
+                    call nc_diag_metadata("Time",                          conv_mass(i)%Time                           ) 
+                    call nc_diag_metadata("Prep_QC_Mark",                  conv_mass(i)%Prep_QC_Mark                   ) 
+                    call nc_diag_metadata("Setup_QC_Mark",                 conv_mass(i)%Setup_QC_Mark                  ) 
+                    call nc_diag_metadata("Prep_Use_Flag",                 conv_mass(i)%Prep_Use_Flag                  ) 
+                    call nc_diag_metadata("Analysis_Use_Flag",             conv_mass(i)%Analysis_Use_Flag              ) 
+                    call nc_diag_metadata("Nonlinear_QC_Rel_Wgt",          conv_mass(i)%Nonlinear_QC_Rel_Wgt           ) 
+                    call nc_diag_metadata("Errinv_Input",                  conv_mass(i)%Errinv_Input                   ) 
+                    call nc_diag_metadata("Errinv_Adjust",                 conv_mass(i)%Errinv_Adjust                  ) 
+                    call nc_diag_metadata("Errinv_Final",                  conv_mass(i)%Errinv_Final                   ) 
+                    call nc_diag_metadata("Observation",                   conv_mass(i)%Observation                    ) 
+                    call nc_diag_metadata("Obs_Minus_Forecast_adjusted",   conv_mass(i)%Obs_Minus_Forecast_adjusted    ) 
+                    call nc_diag_metadata("Obs_Minus_Forecast_unadjusted", conv_mass(i)%Obs_Minus_Forecast_unadjusted  ) 
+  
+                 endif
+              endif
            enddo
         endif
 

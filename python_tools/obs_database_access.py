@@ -116,7 +116,7 @@ class experiment():
 #    
 #    #Now you are connected and ready to query the DB via variable exp.  
 #    #This variable/connection will be used in the examples below
-    def __init__(self, exp, database='ob_exp', startdate=None, enddate=None):
+    def __init__(self, exp, database='ob_exp', startdate=None, enddate=None, verbose_query=None):
         import psycopg2 as psql
 
         self.experiment = exp
@@ -143,6 +143,7 @@ class experiment():
         self.fields = ['north' ,'west'  ,'south'   ,'east'     ,'domain_name','level','levtype',
                       'expver','source','variable','statistic','type'       ,'kx'   ,'kt'     ,
                       'usage' ,'date'  ,'value'   ,'count']
+        self.verbose_query = verbose_query
 
     def set_daterange(self, startdate, enddate):
 # Function exp.set_daterange()
@@ -281,6 +282,9 @@ class experiment():
         query = query + self.append_query(querydict)
         if statistic:
             query = query + " and statistic = \'{}\' ".format(statistic)
+
+        if (self.verbose_query is not None):
+            print(query)
 
         cur.execute(query)
         out = cur.fetchall()

@@ -151,7 +151,7 @@ class rms_2d_plotter:
                  exp2arr[i,j] = np.mean(exp2)
 
                  if (normed):
-                     corarr[i,j] = (exp1arr[i,j] - exp2arr[i,j])/exp2arr[i,j] # mndiff
+                     corarr[i,j] = (exp1arr[i,j] - exp2arr[i,j])/exp2arr[i,j]*100 # mndiff
                  else:
                      corarr[i,j] = exp1arr[i,j] - exp2arr[i,j] # mndiff
                  sigarr[i,j] = False if conf < confidence else True
@@ -179,7 +179,7 @@ class rms_2d_plotter:
             if range is not None:
                 rng = range
 
-            fg = plt.pcolor(stps2d,levs2d,corarr,cmap=cm.newjet,vmin=rng * -1.0 ,vmax=rng)
+            fg = plt.pcolor(stps2d,levs2d,ma.masked_invalid(corarr),cmap=cm.newjet,vmin=rng * -1.0 ,vmax=rng)
             #plt.pcolormesh(stps2d,levs2d,pctarr ,cmap=cm.newjet,vmin=prng * -1.0 ,vmax=prng)
             plt.xlim([0 - 6,120 + 6])
 #            plt.ylim([1075,75])
@@ -193,12 +193,12 @@ class rms_2d_plotter:
             plt.ylabel('Pressure (hPa)')
 
             if (title == None):
-                outtitle = "Anomaly Correlation Difference\n{} minus {}\n{} - {}, n={}".format(expid1, expid2, startdate, enddate, n)
+                outtitle = "RMS Difference\n{} minus {}\n{} - {}, n={}".format(expid1, expid2, startdate, enddate, n)
             else:
                 if (dom == 's.hem'): longdom='Southern Hemisphere'
                 if (dom == 'n.hem'): longdom='Northern Hemisphere'
                 if (dom == 'tropics'): longdom='Tropics'
-                if (dom == 'glob'): longdom='Global'
+                if (dom == 'global'): longdom='Global'
 
                 tmpl = Template(title)
 #                print(dom)
