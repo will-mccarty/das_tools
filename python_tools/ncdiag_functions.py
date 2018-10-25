@@ -40,6 +40,21 @@ def sigo_final(data=None,return_deps=False):
     val[msk] = -9999.9
     return(val)
 
+def qifn(data=None, return_deps=False):
+    deps = ['Station_Elevation']
+
+    qify = np.trunc(data['Station_Elevation'] / 1000.)
+    qifn = data['Station_Elevation'] - (qify * 1000.)
+
+    return(qifn)
+
+def qify(data=None, return_deps=False):
+    deps = ['Station_Elevation']
+
+    qify = np.trunc(data['Station_Elevation'] / 1000.)
+    return(qify)
+
+
 def dist(data=None,return_deps=False):
     from scipy.spatial.distance import cdist
 

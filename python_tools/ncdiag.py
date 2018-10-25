@@ -27,7 +27,8 @@ varmap = {
     'v_omfnbc':'v_Obs_Minus_Forecast_unadjusted',
     'ichan': 'Channel_Index',
     'qcmark': 'QC_Flag',
-    'chused': 'use_flag'}
+    'chused': 'use_flag',
+    'ee':     'Height'}    # Note:  amv expected error is stored in Height
 
 derived_var = {
     'amb':         {'func': ncf.amb,          'deps': ['omf','oma']},
@@ -37,7 +38,9 @@ derived_var = {
     'dist':        {'func': ncf.dist,         'deps': ['lon','lat']},
     'rand':        {'func': ncf.rand,         'deps': ['lon']},
     'station':     {'func': ncf.station,      'deps': ['Station_ID']},
-    'spd_omf':     {'func': ncf.spd_omf,      'deps': ['u_obs','v_obs','u_omf','v_omf']}
+    'spd_omf':     {'func': ncf.spd_omf,      'deps': ['u_obs','v_obs','u_omf','v_omf']},
+    'qifn':        {'func': ncf.qifn,         'deps': ['Station_Elevation']},
+    'qify':        {'func': ncf.qify,         'deps': ['Station_Elevation']}
     }
 
 stats = {
