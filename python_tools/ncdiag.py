@@ -7,7 +7,7 @@ varmap = {
     'lat':   'Latitude'         ,
     'lon':   'Longitude'        ,
     'kx':    'Observation_Type' ,
-    'used':  'Analysis_Use_Flag',
+#    'used':  'Analysis_Use_Flag',
     'pres':  'Pressure',
     'ob':    'Observation',
     'obs':   'Observation',
@@ -34,13 +34,14 @@ derived_var = {
     'amb':         {'func': ncf.amb,          'deps': ['omf','oma']},
     'sigo_input':  {'func': ncf.sigo_input,   'deps': ['Errinv_Input']},
     'sigo_final':  {'func': ncf.sigo_final,   'deps': ['Errinv_Final']},
-    'sigo':        {'func': ncf.sigo_final,   'deps': ['Errinv_Final']},
+    'sigo':        {'func': ncf.sigo,         'deps': ['Errinv_Final','Inverse_Observation_Error']},
     'dist':        {'func': ncf.dist,         'deps': ['lon','lat']},
     'rand':        {'func': ncf.rand,         'deps': ['lon']},
     'station':     {'func': ncf.station,      'deps': ['Station_ID']},
     'spd_omf':     {'func': ncf.spd_omf,      'deps': ['u_obs','v_obs','u_omf','v_omf']},
     'qifn':        {'func': ncf.qifn,         'deps': ['Station_Elevation']},
-    'qify':        {'func': ncf.qify,         'deps': ['Station_Elevation']}
+    'qify':        {'func': ncf.qify,         'deps': ['Station_Elevation']},
+    'used':        {'func': ncf.used,         'deps': ['use_flag','Analysis_Use_Flag','QC_Flag','Channel_Index']}
     }
 
 stats = {
@@ -66,7 +67,11 @@ class obs():
 
     def __init__(self, fn, date=None, mask=None, verbose=False, reallyverbose=False, in_data=None):
         self.fn = fn
-        self.nc4 = nc4.Dataset(self.fn)
+        try:
+            self.nc4 = nc4.Dataset(self.fn)
+        except:
+            raise ValueError('NCDIAG File {} failed'.format(self.fn))
+
         self.data = { 'fn':   self.fn,
                       'date': date   ,
                       'centroid_lat': None,
@@ -124,6 +129,7 @@ class obs():
             msk = masked
 
         derived = in_var in derived_var
+
         if (derived):
             vars = derived_var[in_var]['deps']
         else:
@@ -131,10 +137,11 @@ class obs():
 
         for cvar in vars:
             var = var_to_var(cvar)
-            try:
+#            try:
+            if (var not in self.data and var in self.nc4.variables):
                 self.data[var] = self.nc4.variables[var][...]
-            except:
-                raise ValueError('Field {} not in file'.format(var))
+#            except:
+#                raise ValueError('Field {} not in file'.format(var))
 
         var = var_to_var(in_var)
         
