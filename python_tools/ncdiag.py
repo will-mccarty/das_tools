@@ -173,6 +173,10 @@ class obs():
 
         return(value)
 
+    def global_attr(self,attrname):
+        if attrname in self.nc4.ncattrs():
+            return(self.nc4.getncattr(attrname))
+
 class obs_template(obs):
     
 
