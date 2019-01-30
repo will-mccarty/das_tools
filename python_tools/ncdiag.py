@@ -59,7 +59,9 @@ def var_to_var(in_var):
 def getFields(text):
     import re
 
-    wds = re.compile('\w+\.*\w*').findall(text)
+    # regex changed from '\w+\.*\w*' to '\w+\@*\w*\.*\w*' for IODA variable handling 
+    #   specifically - handle the @ sign w/ word chars
+    wds = re.compile('\w+\@*\w*\.*\w*').findall(text)
     return(wds[::2])
 
 
@@ -110,6 +112,7 @@ class obs():
         if (self.reallyverbose): print(newlogic)
 
         for fld in list(set(flds)):
+            if (self.reallyverbose): print('field: ',fld)
             cur = self.v(fld)
             newlogic = newlogic.replace(fld,'self.data[\'{}\']'.format(var_to_var(fld)))
 
