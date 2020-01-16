@@ -21,7 +21,7 @@ class ac_2d_plotter:
 #   def __init__(self):
 
    
-   def ac_2d_plotter(self,startdate=2015080200,enddate=2015093000,expid1='x0016_cld.21z',expid2='x0016_ctl.21z',variables=['h','t','u','v','q'],domains=['n.hem','s.hem'],sigplot=False,verbose=False,straightmean=False,confidence=0.95,title=None,verif1='gmao',verif2='gmao',dblevs=None,maxlev=1000.,minlev=100.,levs=None):
+   def ac_2d_plotter(self,startdate=2015080200,enddate=2015093000,expid1='x0016_cld.21z',expid2='x0016_ctl.21z',variables=['h','t','u','v','q'],domains=['n.hem','s.hem'],sigplot=False,verbose=False,straightmean=False,confidence=0.95,title=None,verif1='gmao',verif2='gmao',dblevs=None,maxlev=1000.,minlev=100.,levs=None, zero_t_zero=False):
    
 #      import psycopg2
 #      import numpy as np
@@ -168,6 +168,7 @@ class ac_2d_plotter:
             plt.subplots_adjust(top=0.85, left=0.18)
 #            plt.tight_layout() 
             #ac.oplot_sig_hatch(ax,sigarr,pltsteps,pltlevs)
+            if (zero_t_zero): corarr[0,:] = 0.0
             mx=np.max(corarr)
             mn=np.min(corarr)
             rng=max((np.abs(mx),np.abs(mn)))
@@ -195,7 +196,7 @@ class ac_2d_plotter:
             else:
                 if (dom == 's.hem'): longdom='Southern Hemisphere'
                 if (dom == 'n.hem'): longdom='Northern Hemisphere'
-                if (dom == 'trop'): longdom='Tropics'
+                if (dom == 'tropics'): longdom='Tropics'
                 if (dom == 'glob'): longdom='Global'
 
                 tmpl = Template(title)

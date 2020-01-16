@@ -32,6 +32,86 @@ def amb(data=None,return_deps=False):
     val = data[ncd.var_to_var('omf')]-data[ncd.var_to_var('oma')]
     return(val)
 
+def omfbyo(data=None,return_deps=False):
+    deps = ['omf','obs']
+
+    omf = data[ncd.var_to_var('omf')]
+    obs = data[ncd.var_to_var('obs')]
+
+    val = omf/obs
+    return(val)
+
+def omfbyf(data=None,return_deps=False):
+    deps = ['omf','obs']
+   
+    val = data[ncd.var_to_var('omf')] / (data[ncd.var_to_var('obs')] - data[ncd.var_to_var('omf')])
+    return(val)
+
+
+
+def sens(data=None,return_deps=False):
+    deps = ['ObsDiagSave_obssen','ObsDiagSave_nldepart']
+
+    obssen = data['ObsDiagSave_obssen']
+    nldepart = obssen * 0.0
+    nldepart[:,0] = data['ObsDiagSave_nldepart'][:,1]
+
+    val = (obssen * nldepart).flatten()
+    return(val)
+
+def u_sens(data=None,return_deps=False):
+    deps = ['u_ObsDiagSave_obssen','u_ObsDiagSave_nldepart']
+
+    obssen = data['u_ObsDiagSave_obssen']
+    nldepart = obssen * 0.0
+    nldepart[:,0] = data['u_ObsDiagSave_nldepart'][:,1]
+
+    val = (obssen * nldepart).flatten()
+    return(val)
+
+def v_sens(data=None,return_deps=False):
+    deps = ['v_ObsDiagSave_obssen','v_ObsDiagSave_nldepart']
+
+    obssen = data['v_ObsDiagSave_obssen']
+    nldepart = obssen * 0.0
+    nldepart[:,0] = data['v_ObsDiagSave_nldepart'][:,1]
+
+    val = (obssen * nldepart).flatten()
+    return(val)
+
+def uv_sens(data=None,return_deps=False):
+    deps = ['u_ObsDiagSave_obssen','u_ObsDiagSave_nldepart','v_ObsDiagSave_obssen','v_ObsDiagSave_nldepart']
+
+    u_obssen = data['u_ObsDiagSave_obssen']
+    v_obssen = data['v_ObsDiagSave_obssen']
+    u_nldepart = u_obssen * 0.0
+    u_nldepart[:,0] = data['u_ObsDiagSave_nldepart'][:,1]
+    v_nldepart = v_obssen * 0.0
+    v_nldepart[:,0] = data['v_ObsDiagSave_nldepart'][:,1]
+
+    val = (u_obssen * u_nldepart + v_obssen * v_nldepart).flatten()
+    return(val)
+
+def sens_used(data=None,return_deps=False):
+    deps = ['ObsDiagSave_iuse']
+
+    val = data['ObsDiagSave_iuse'].flatten()
+    return(val)
+
+
+def fcst(data=None,return_deps=False):
+    deps = ['omf','obs']
+
+    val = data[ncd.var_to_var('obs')]-data[ncd.var_to_var('omf')]
+    return(val)
+
+def anl(data=None,return_deps=False):
+    deps = ['oma','obs']
+
+    val = data[ncd.var_to_var('obs')]-data[ncd.var_to_var('oma')]
+    return(val)
+
+
 def spd_omf(data=None,return_deps=False):
     deps = ['u_obs','v_obs','u_omf','v_omf']
     u_bkg = data[ncd.var_to_var('u_obs')] - data[ncd.var_to_var('u_omf')] 
@@ -73,6 +153,17 @@ def sigo(data=None,return_deps=False):
     return(val)
 
 
+def aeolus_cor(data=None,return_deps=False):
+    deps = ['Retrieval_Pressure','Pressure','Deriv_Wind_wrt_Pressure','Retrieval_Temperature','Background_Temperature','Deriv_Wind_wrt_Temperature']
+
+    delp = data['Retrieval_Pressure'] - data['Pressure']
+    delT = data['Retrieval_Temperature'] - data['Background_Temperature'] 
+
+    correction = data['Deriv_Wind_wrt_Pressure']*delp + data['Deriv_Wind_wrt_Temperature']*delT
+
+    return(correction)
+
+
 def qifn(data=None, return_deps=False):
     deps = ['Station_Elevation']
 
@@ -106,6 +197,13 @@ def rand(data=None,return_deps=False):
     val = rnd.rand(nv)
     return(val)
 
+def rms(val, dep=None):
+    return(np.sqrt(np.mean(np.square(val))))
+
+def absmean(val, dep=None):
+    return(np.abs(np.mean(val)))
+
+
 def cpen(val, dep=None):
     omg  = val
     sigo = dep['sigo']
@@ -114,8 +212,9 @@ def cpen(val, dep=None):
     for comg, csigo in zip(omg,sigo):
         ct = ct + 1
         s = s + (comg / csigo)**2
-        
-    return((s/ct))#**(0.5))
+
+    val = (s/ct) if ct > 0 else np.nan        
+    return(val)#**(0.5))
 
 def haversine_pairwise(t1, t2):
     """

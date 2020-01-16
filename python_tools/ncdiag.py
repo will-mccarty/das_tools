@@ -6,7 +6,8 @@ import ncdiag_functions as ncf
 varmap = { 
     'lat':   'Latitude'         ,
     'lon':   'Longitude'        ,
-    'kx':    'Observation_Type' ,
+    'kx':     'Observation_Type' ,
+    'subtype':'Observation_Subtype', 
 #    'used':  'Analysis_Use_Flag',
     'pres':  'Pressure',
     'ob':    'Observation',
@@ -32,6 +33,8 @@ varmap = {
 
 derived_var = {
     'amb':         {'func': ncf.amb,          'deps': ['omf','oma']},
+    'fcst':        {'func': ncf.fcst,         'deps': ['omf','obs']},
+    'anl':         {'func': ncf.anl,          'deps': ['oma','obs']},
     'sigo_input':  {'func': ncf.sigo_input,   'deps': ['Errinv_Input']},
     'sigo_final':  {'func': ncf.sigo_final,   'deps': ['Errinv_Final']},
     'sigo':        {'func': ncf.sigo,         'deps': ['Errinv_Final','Inverse_Observation_Error']},
@@ -41,13 +44,26 @@ derived_var = {
     'spd_omf':     {'func': ncf.spd_omf,      'deps': ['u_obs','v_obs','u_omf','v_omf']},
     'qifn':        {'func': ncf.qifn,         'deps': ['Station_Elevation']},
     'qify':        {'func': ncf.qify,         'deps': ['Station_Elevation']},
-    'used':        {'func': ncf.used,         'deps': ['use_flag','Analysis_Use_Flag','QC_Flag','Channel_Index']}
+    'used':        {'func': ncf.used,         'deps': ['use_flag','Analysis_Use_Flag','QC_Flag','Channel_Index']},
+    'aeolus_cor':  {'func': ncf.aeolus_cor,   'deps': ['Retrieval_Pressure','Pressure','Deriv_Wind_wrt_Pressure',
+                                                       'Retrieval_Temperature','Background_Temperature','Deriv_Wind_wrt_Temperature']},
+    'sens':        {'func': ncf.sens,         'deps': ['ObsDiagSave_obssen','ObsDiagSave_nldepart']},
+    'u_sens':      {'func': ncf.u_sens,       'deps': ['u_ObsDiagSave_obssen','u_ObsDiagSave_nldepart']},
+    'v_sens':      {'func': ncf.v_sens,       'deps': ['v_ObsDiagSave_obssen','v_ObsDiagSave_nldepart']},
+    'uv_sens':     {'func': ncf.uv_sens,      'deps': ['u_ObsDiagSave_obssen','u_ObsDiagSave_nldepart', 'v_ObsDiagSave_obssen','v_ObsDiagSave_nldepart']},
+    'sens_used':   {'func': ncf.sens_used,    'deps': ['ObsDiagSave_iuse']},
+    'omfbyo':      {'func': ncf.omfbyo,       'deps': ['omf','obs']},
+    'omfbyf':      {'func': ncf.omfbyf,       'deps': ['omf','obs']}
     }
 
 stats = {
     'mean':        {'func': np.mean,          'deps': None} ,
-    'cpen':        {'func': ncf.cpen,         'deps': ['sigo']}
-    }
+    'absmean':     {'func': ncf.absmean,      'deps': None} ,
+    'std':         {'func': np.std,           'deps': None} ,
+    'count':       {'func': len,              'deps': None} ,
+    'sum':         {'func': np.sum,           'deps': None} ,
+    'cpen':        {'func': ncf.cpen,         'deps': ['sigo']} ,
+    'rms':         {'func': ncf.rms,          'deps': None} }
 
 def var_to_var(in_var):
     if (in_var in varmap):
@@ -68,11 +84,18 @@ def getFields(text):
 class obs():
 
     def __init__(self, fn, date=None, mask=None, verbose=False, reallyverbose=False, in_data=None):
-        self.fn = fn
+        self.fn = None
+        self.verbose = verbose
+        self.reallyverbose = reallyverbose
+
         try:
-            self.nc4 = nc4.Dataset(self.fn)
+            self.nc4 = nc4.Dataset(fn)
         except:
-            raise ValueError('NCDIAG File {} failed'.format(self.fn))
+#            raise ValueError('NCDIAG File {} failed'.format(self.fn))
+            print('warning')
+            return
+
+        self.fn = fn
 
         self.data = { 'fn':   self.fn,
                       'date': date   ,
@@ -94,8 +117,6 @@ class obs():
             self.set_mask(mask)
 
         self.mask_enabled = None
-        self.verbose = verbose
-        self.reallyverbose = reallyverbose
 
     def set_centroid(self, lon, lat):
         self.data['centroid_lon'] = lon
@@ -106,55 +127,60 @@ class obs():
         self.mask_enabled = msk
 
     def set_mask(self, logic):
-        flds = getFields(logic)
+        if self.fn is not None: 
+            flds = getFields(logic)
 
-        newlogic = logic
-        if (self.reallyverbose): print(newlogic)
+            newlogic = logic
+            if (self.reallyverbose): print(newlogic)
 
-        for fld in list(set(flds)):
-            if (self.reallyverbose): print('field: ',fld)
-            cur = self.v(fld)
-            newlogic = newlogic.replace(fld,'self.data[\'{}\']'.format(var_to_var(fld)))
+            for fld in list(set(flds)):
+                if (self.reallyverbose): print('field: ',fld)
+                cur = self.v(fld)
+                newlogic = newlogic.replace(fld,'self.data[\'{}\']'.format(var_to_var(fld)))
 
-        if (self.reallyverbose): print(newlogic)
+            if (self.reallyverbose): print(newlogic)
 
-        self.mask=eval(newlogic)
+            self.mask=eval(newlogic)
 
     def v(self, in_var,masked=None):
         import warnings as warn
 
-        if masked is True and self.mask is None:
-            raise ValueError('Masked is asked for, but no mask is set - use self.set_mask')
+        if self.fn is not None:
+            if masked is True and self.mask is None:
+                raise ValueError('Masked is asked for, but no mask is set - use self.set_mask')
+    
+            if (masked is None): 
+                msk = self.mask_enabled
+            else:
+                msk = masked
+    
+            derived = in_var in derived_var
+    
+            if (derived):
+                vars = derived_var[in_var]['deps']
+            else:
+                vars = [in_var]
+    
+            for cvar in vars:
+                var = var_to_var(cvar)
+    #            try:
+                if (var not in self.data and var in self.nc4.variables):
+                    self.data[var] = self.nc4.variables[var][...]
+    #            except:
+    #                raise ValueError('Field {} not in file'.format(var))
+    
+            var = var_to_var(in_var)
+            
+            if (derived and self.data[var] is None):
+                self.data[var] = derived_var[var]['func'](data=self.data)
+    
+            if (msk):
+                return(self.data[var][self.mask])
+            else:
+                return(self.data[var])
 
-        if (masked is None): 
-            msk = self.mask_enabled
         else:
-            msk = masked
-
-        derived = in_var in derived_var
-
-        if (derived):
-            vars = derived_var[in_var]['deps']
-        else:
-            vars = [in_var]
-
-        for cvar in vars:
-            var = var_to_var(cvar)
-#            try:
-            if (var not in self.data and var in self.nc4.variables):
-                self.data[var] = self.nc4.variables[var][...]
-#            except:
-#                raise ValueError('Field {} not in file'.format(var))
-
-        var = var_to_var(in_var)
-        
-        if (derived and self.data[var] is None):
-            self.data[var] = derived_var[var]['func'](data=self.data)
-
-        if (msk):
-            return(self.data[var][self.mask])
-        else:
-            return(self.data[var])
+            return(None)
 
     def stat(self,stat,var,masked=None):
         if masked is True and self.mask is None:
@@ -169,10 +195,10 @@ class obs():
 
         if stats[stat]['deps'] is not None:
             for dep in stats[stat]['deps']:
-                dep_dict[dep] = self.v(dep)
-            value = stats[stat]['func'](self.v(var),dep=dep_dict)
+                dep_dict[dep] = self.v(dep,masked=msk)
+            value = stats[stat]['func'](self.v(var,masked=msk),dep=dep_dict)
         else:
-            value = stats[stat]['func'](self.v(var)) 
+            value = stats[stat]['func'](self.v(var,masked=msk)) 
 
         return(value)
 
@@ -222,8 +248,9 @@ class obs_template(obs):
         for cobd in self.obdict:
             self.obdict[cobd].set_centroid(lon,lat)
 
-    def v(self, in_var, startdate=None, enddate=None, dates=None, hr_inc=None, masked=None):
+    def stat_ts(self, stat, in_var, startdate=None, enddate=None, dates=None, hr_inc=None, masked=None, DataFrame=False):
         import gmao_tools as gt
+        import pandas as pd
 
         if (masked or self.mask_enabled) and self.mask_logic is None:
             raise ValueError('Masked data requested, but mask logic is not set')
@@ -254,7 +281,8 @@ class obs_template(obs):
         dts = gt.ndate_to_dt(ndates)
 
         data = None
-
+        ts = None
+        out_dates = None
         for dt in dts:
             fn = self.fn_from_tmpl(dt)
 
@@ -262,11 +290,70 @@ class obs_template(obs):
                 if self.verbose: print('Opening {}'.format(fn))
                 self.obdict[fn] = obs(fn,date=dt,verbose=self.verbose, reallyverbose=self.reallyverbose, in_data=self.data)
             if msk is not None:
+                if self.verbose: print('setting mask on {} to {}'.format(fn,msk))
+                self.obdict[fn].set_mask(msk)
+#                print(self.obdict[fn].stat('mean','omf',masked=msk))
+
+            if self.obdict[fn].v(in_var,masked=msk) is not None:
+                if (ts is None):
+                    ts = self.obdict[fn].stat(stat,in_var,masked=msk)
+                    out_dates = np.array(gt.dt_to_ndate(dt))
+                else:
+                    ts = np.append(ts,self.obdict[fn].stat(stat,in_var,masked=msk))
+                    out_dates = np.append(out_dates,gt.dt_to_ndate(dt))
+                
+        if (DataFrame):
+            return(pd.DataFrame.from_dict({'ndate':out_dates,'Val':ts,'datetime':gt.ndate_to_dt(out_dates)}))
+        else:
+            return(out_dates,ts)          
+
+    def v(self, in_var, startdate=None, enddate=None, dates=None, hr_inc=None, masked=None):
+        import gmao_tools as gt
+
+        if (masked or self.mask_enabled) and self.mask_logic is None:
+            raise ValueError('Masked data requested, but mask logic is not set')
+        elif ((masked or self.mask_enabled) and self.mask_logic is not None):
+            msk = self.mask_logic
+        else:
+            msk = None
+
+
+
+        if startdate is None: startdate=self.startdate
+        if enddate is None:   enddate=self.enddate
+        if hr_inc is None:    hr_inc=self.hr_inc
+
+        if (startdate is None and enddate is None and dates is None):
+            raise ValueError('No dates are specified, unable to retrieve data')
+        elif (startdate is not None and enddate is not None and dates is not None):
+            raise ValueError('Start/end dates and dates array specified, unable to retrieve data due to conflicting date specifications')
+        elif ( (startdate is not None and enddate is None) or (startdate is None and enddate is not None) ):
+            raise ValueError('Start/end date specified without the other')
+        elif (startdate is not None and enddate is not None and dates is None):
+            ndates = gt.get_ndate_timeseries(startdate,enddate,hr_inc=hr_inc)
+        elif ( (startdate is None and enddate is None) and dates is not None):
+            ndates = dates
+        else:
+            raise ValueError('Unexcepted failure on date inputs, startdate = {}, enddate = {}, dates = {}'.format(startdate,enddate,dates))
+
+        dts = gt.ndate_to_dt(ndates)
+
+        data = None
+
+        for dt in dts:
+            fn = self.fn_from_tmpl(dt)
+
+            if fn not in self.obdict:
+                if self.verbose: print('Opening {}'.format(fn))
+                self.obdict[fn] = obs(fn,date=dt,verbose=self.verbose, reallyverbose=self.reallyverbose, in_data=self.data)
+            if msk is not None:
                 self.obdict[fn].set_mask(msk)
 
-            if (data is None):
-                data = self.obdict[fn].v(in_var,masked=msk)
-            else:
-                data = np.append(data,self.obdict[fn].v(in_var,masked=msk),axis=0)
-                
-        return(data)                  
+            if self.obdict[fn].v(in_var,masked=msk) is not None:
+                if (data is None):
+                    data = self.obdict[fn].v(in_var,masked=msk)
+                else:
+                    data = np.append(data,self.obdict[fn].v(in_var,masked=msk),axis=0)
+
+        return(data)
+       
