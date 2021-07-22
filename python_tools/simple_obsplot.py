@@ -74,7 +74,7 @@ def plot_spatial_gauss_mean(lons,lats,val,deltalat=1.0,cb_label='Mean',fn=None,v
     plot_spatial_gauss(lons_new,lats_new,hnew,cb_label=cb_label,fn=fn,vmin=vmin,vmax=vmax,cmap=cmap)
 
 
-def plot_spatial_gauss(lons_new,lats_new,hnew,cb_label='',fn=None,vmin=None,vmax=None,cb_labelsize=15,cmap='plasma'):
+def plot_spatial_gauss(lons_new,lats_new,hnew,cb_label='',fn=None,vmin=None,vmax=None,cb_labelsize=15,cmap='plasma',suptitle=None):
 
     fig = plt.figure(figsize=(15,5))
     if vmin is None: vmin = np.min(hnew)
@@ -93,9 +93,9 @@ def plot_spatial_gauss(lons_new,lats_new,hnew,cb_label='',fn=None,vmin=None,vmax
     
     outside = (lats_new < 10)
     
-    polelon = np.ma.masked_where(outside,lons_new)
-    polelat = np.ma.masked_where(outside,lats_new)
-    poleh   = np.ma.masked_where(outside,hnew)
+    polelon = np.ma.masked_where(outside,lons_new).data
+    polelat = np.ma.masked_where(outside,lats_new).data
+    poleh   = np.ma.masked_where(outside,hnew).data
     
     #ax1 = plt.subplot(132,projection=ccrs.NorthPolarStereo())
     ax1 = plt.subplot2grid((2, 2), (1, 0), colspan=1,projection=ccrs.NorthPolarStereo())
@@ -107,9 +107,9 @@ def plot_spatial_gauss(lons_new,lats_new,hnew,cb_label='',fn=None,vmin=None,vmax
     
     outside = (lats_new > -10)
     
-    polelon = np.ma.masked_where(outside,lons_new)
-    polelat = np.ma.masked_where(outside,lats_new)
-    poleh   = np.ma.masked_where(outside,hnew)
+    polelon = np.ma.masked_where(outside,lons_new).data
+    polelat = np.ma.masked_where(outside,lats_new).data
+    poleh   = np.ma.masked_where(outside,hnew).data
     
     #ax2 = plt.subplot(133,projection=ccrs.SouthPolarStereo())
     ax2 = plt.subplot2grid((2, 2), (1, 1), colspan=1,projection=ccrs.SouthPolarStereo())
@@ -128,7 +128,7 @@ def plot_spatial_gauss(lons_new,lats_new,hnew,cb_label='',fn=None,vmin=None,vmax
     cbar.ax.tick_params(labelsize=cb_labelsize)
 #    cbar.set_label('Spire Occultation Profile Count\n23 Sep - 9 Dec 2018',size=13)
     cbar.set_label(cb_label,size=cb_labelsize)
-    
+    if (suptitle is not None): plt.suptitle(suptitle,fontsize=16)
     plt.tight_layout()
     
     
@@ -178,8 +178,8 @@ def get_cms_vs_z(var,hgt,hgtbins=None,nbins=10):
 
     return(dct)
 
-def plot_cms_vs_z(ncd,var,msks,labels,colors=None,hgtbins=None,nbins=10,show=True,title=None,fn=None,scinote=[True,False,False]):
-    vdct = {}
+def plot_cms_vs_z(ncd,var,msks,labels,colors=None,hgtbins=None,nbins=10,show=True,title=None,fn=None,scinote=[True,False,False],vdct={}):
+#    vdct = {}
     ncd.use_mask(True)
     if colors is None: 
         colors = np.zeros(len(labels))# * None
@@ -189,8 +189,9 @@ def plot_cms_vs_z(ncd,var,msks,labels,colors=None,hgtbins=None,nbins=10,show=Tru
         vdct[clab]['color'] = ccol
 
     plot_cms_vs_z_plotter(vdct,hgtbins=hgtbins,nbins=nbins,title=title,fn=fn,scinote=scinote)
+    return(vdct)
 
-def plot_sens_vs_z(ncd,var,msks,labels,colors=None,hgtbins=None,nbins=10,show=True,title=None,fn=None):
+def plot_sens_vs_z(ncd,var,msks,labels,colors=None,hgtbins=None,nbins=10,show=True,title=None,fn=None,vdct={}):
     vdct = {}   
     ncd.use_mask(True)
     if colors is None:
@@ -206,10 +207,11 @@ def plot_sens_vs_z(ncd,var,msks,labels,colors=None,hgtbins=None,nbins=10,show=Tr
 def plot_cms_vs_z_plotter(in_vdct,hgtbins=None,nbins=10,show=True,title=None,fn=None,vars=['ct','mn','sd'],xlabels=['Count','Mean','Std. Dev'],scinote=[True,False,False]):
     import gmao_tools as gt
     import matplotlib
+    from matplotlib.ticker import ScalarFormatter
 
     matplotlib.rcParams.update({'font.size': 16})
 
-    fig, (axct,axmn,axsd)  = plt.subplots(1,3,sharey=True, figsize=(10,5))
+    fig, (axct,axmn,axsd)  = plt.subplots(1,3,sharey=True, figsize=(10.5,5))
 
     ctmax = 0.
     mnmax = 0.
@@ -245,13 +247,15 @@ def plot_cms_vs_z_plotter(in_vdct,hgtbins=None,nbins=10,show=True,title=None,fn=
         else:
             ctmax = np.max([np.nanmax(np.abs(ct)),ctmax])
             axct.set_xlim(-ctmax,ctmax)
-    
+            axct.plot([0,0],[lvmin,lvmax],'k:')
+  
         if (vars[1] == 'ct' or vars[1] == 'sd'):
             mnmax = np.max([np.nanmax(mn),mnmax])
             axmn.set_xlim(0,mnmax)
         else:
             mnmax = np.max([np.nanmax(np.abs(mn)),mnmax])
             axmn.set_xlim(-1.0 * mnmax,mnmax)
+            axmn.plot([0,0],[lvmin,lvmax],'k:')
         print(vars[2])
         if (vars[2] == 'ct' or vars[2] == 'sd'):
             sdmax = np.max([np.nanmax(sd),sdmax])
@@ -261,12 +265,22 @@ def plot_cms_vs_z_plotter(in_vdct,hgtbins=None,nbins=10,show=True,title=None,fn=
             if (np.abs(csdmax) > sdmax): 
                 sdmax = csdmax
                 axsd.set_xlim(-sdmax,sdmax)
-                
+            axsd.plot([0,0],[lvmin,lvmax],'k:')
+
     axct.set_ylim(lvmin,lvmax)    
 
-    if (scinote[0]): axct.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
-    if (scinote[1]): axmn.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
-    if (scinote[2]): axsd.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
+    offsetTextSize=12
+
+    if (scinote[0]): 
+        axct.ticklabel_format(style='sci', axis='x', scilimits=(0,0),useMathText=True)
+        axct.xaxis.offsetText.set_fontsize(offsetTextSize)
+    if (scinote[1]): 
+        axmn.ticklabel_format(style='sci', axis='x', scilimits=(0,0),useMathText=True)
+        axmn.xaxis.offsetText.set_fontsize(offsetTextSize)
+    if (scinote[2]): 
+        axsd.ticklabel_format(style='sci', axis='x', scilimits=(0,0),useMathText=True)
+        axsd.xaxis.offsetText.set_fontsize(offsetTextSize)
+
     axct.xaxis.set_major_locator(plt.MaxNLocator(3))
     axmn.xaxis.set_major_locator(plt.MaxNLocator(5))
     axsd.xaxis.set_major_locator(plt.MaxNLocator(5))
@@ -278,7 +292,9 @@ def plot_cms_vs_z_plotter(in_vdct,hgtbins=None,nbins=10,show=True,title=None,fn=
     axsd.set_xlabel(xlabels[2])
     if title is not None: plt.suptitle(title)#'Normalized Background Departure (O-F)/F')
 
-    axsd.legend(bbox_to_anchor=(1.675, 0.5),loc='center right', borderaxespad=0.,fontsize=14,ncol=1)
+#    axsd.legend(bbox_to_anchor=(1.675, 0.5),loc='center right', borderaxespad=0.,fontsize=14,ncol=1)
+
+    axsd.legend(bbox_to_anchor=(1.005, 0.5),loc='center left', borderaxespad=0.,fontsize=14,ncol=1)
 
     fig.tight_layout(rect=[0, 0.03, 1, 0.97])
 #    axmn.xaxis.set_tick_params(rotation=90)

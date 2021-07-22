@@ -126,6 +126,10 @@ class experiment():
            self.connect_string = "dbname='semper' user='gmao_user' host='edb1' "
         elif (database == 'ob_ops'):
            self.connect_string = "dbname='gmao_stats' user='gmao_user' host='edb1' "
+        elif (database == 'im_exp'):
+           self.connect_string = "dbname='semper' user='gmao_user' host='edb1' "
+        elif (database == 'im_ops'):
+           self.connect_string = "dbname='gmao_stats' user='gmao_user' host='edb1' "
         else:
            print('Warning, not DB ob_exp or ob_ops, using dbname \'semper\'')
            self.connect_string = "dbname='semper' user='gmao_user' host='edb1' "
@@ -348,6 +352,28 @@ class experiment():
 
         return(bias)
 
+    def get_sum(self,query):
+# Function exp.get_sum()
+#  Description:  Get the sum from the database for those observations that
+#    match the inputted query dict
+#  Notes:
+#    - It is a good idea to run the show_all_distinct on a query to make sure
+#        you are really querying exactly what intend.  It will show you all
+#        that will be selected, and it will prevent you from mistakenly
+#        including things
+#  Inputs:
+#    query:  query dict
+#  Returns:
+#    sum:  float of sum
+#  Example:
+#    #continuing from initialization example above)
+#    print(exp.get_sum(query))
+        val, ct = self.get_values_counts(query, statistic='sum')
+
+        sum = np.sum(val)
+
+        return(sum)
+
     def get_rms_from_list(self, query, field, list):
 # Function exp.get_rms_from_list()
 #  Description:  Get the rms from the database for those observations that
@@ -419,6 +445,43 @@ class experiment():
             bias_array.append(bias)
 
         return(np.array(bias_array))
+    def get_sum_from_list(self, query, field, list):
+# Function exp.get_sum_from_list()
+#  Description:  Get the sum from the database for those observations that
+#    match the inputted query dict, except for the field inputted.  That field
+#    will be looped over the list values also inputted
+#  Notes:
+#    - It is a good idea to run the show_all_distinct on a query to make sure
+#        you are really querying exactly what intend.  It will show you all
+#        that will be selected, and it will prevent you from mistakenly
+#        including things
+#  Inputs:
+#    query:  query dict
+#    field:  string of the key/field in query that you want to alter and loop
+#              over
+#    list:   values over which you want to loop
+#  Returns:
+#    sum_array:  numpy array of sum floats of size (list)
+#  Example:
+#    #continuing from initialization example above)
+#    levs_to_compute = [200.,500.,850.]
+#    sum_arr = exp.get_sum_from_list(query,level,lev_to_compute)
+#    for lev, sum in zip(levs_to_compute,sum_arr):
+#       print(lev,sum)
+#
+        from copy import deepcopy
+
+        in_query = deepcopy(query)
+
+        sum_array = []
+        for l in list:
+            in_query[field] = l
+            sum = self.get_sum(in_query)
+            sum_array.append(sum)
+
+        return(np.array(sum_array))
+
+
 
     def get_count_from_list(self, query, field, list):
         from copy import deepcopy
@@ -512,5 +575,7 @@ class experiment():
 
        return(tarray)
        
-
+    def get_ndate_count(self,in_query=None):
+       ct = len(self.get_distinct('date',in_query=in_query))
+       return(ct)
 

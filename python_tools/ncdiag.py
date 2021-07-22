@@ -35,13 +35,18 @@ derived_var = {
     'amb':         {'func': ncf.amb,          'deps': ['omf','oma']},
     'fcst':        {'func': ncf.fcst,         'deps': ['omf','obs']},
     'anl':         {'func': ncf.anl,          'deps': ['oma','obs']},
+    'bc':          {'func': ncf.bc,           'deps': ['omfbc','omfnbc']},
     'sigo_input':  {'func': ncf.sigo_input,   'deps': ['Errinv_Input']},
     'sigo_final':  {'func': ncf.sigo_final,   'deps': ['Errinv_Final']},
     'sigo':        {'func': ncf.sigo,         'deps': ['Errinv_Final','Inverse_Observation_Error']},
     'dist':        {'func': ncf.dist,         'deps': ['lon','lat']},
     'rand':        {'func': ncf.rand,         'deps': ['lon']},
     'station':     {'func': ncf.station,      'deps': ['Station_ID']},
+    'spd_obs':     {'func': ncf.spd_obs,      'deps': ['u_obs','v_obs']},
+    'spd_fcst':    {'func': ncf.spd_fcst,     'deps': ['u_obs','v_obs','u_omf','v_omf']},
     'spd_omf':     {'func': ncf.spd_omf,      'deps': ['u_obs','v_obs','u_omf','v_omf']},
+    'dir_obs':     {'func': ncf.dir_obs,      'deps': ['u_obs','v_obs']},
+    'dir_fcst':    {'func': ncf.dir_fcst,     'deps': ['u_obs','v_obs','u_omf','v_omf']},
     'qifn':        {'func': ncf.qifn,         'deps': ['Station_Elevation']},
     'qify':        {'func': ncf.qify,         'deps': ['Station_Elevation']},
     'used':        {'func': ncf.used,         'deps': ['use_flag','Analysis_Use_Flag','QC_Flag','Channel_Index']},
@@ -261,8 +266,8 @@ class obs_template(obs):
 
         
 
-        if startdate is None: startdate=self.startdate
-        if enddate is None:   enddate=self.enddate 
+        if startdate is None and dates is None: startdate=self.startdate
+        if enddate is None and dates is None:   enddate=self.enddate 
         if hr_inc is None:    hr_inc=self.hr_inc
 
         if (startdate is None and enddate is None and dates is None):

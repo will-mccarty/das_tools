@@ -98,6 +98,11 @@ def sens_used(data=None,return_deps=False):
     val = data['ObsDiagSave_iuse'].flatten()
     return(val)
 
+def bc(data=None,return_deps=False):
+    deps = ['omfbc','omfnbc']
+
+    val = data[ncd.var_to_var('omfbc')]-data[ncd.var_to_var('omfnbc')]
+    return(val)
 
 def fcst(data=None,return_deps=False):
     deps = ['omf','obs']
@@ -121,6 +126,48 @@ def spd_omf(data=None,return_deps=False):
 
     val = spd_o - spd_b
     return(val) 
+#ncf.spd_fcst
+
+def spd_fcst(data=None,return_deps=False):
+    deps = ['u_obs','v_obs','u_omf','v_omf']
+    u_bkg = data[ncd.var_to_var('u_obs')] - data[ncd.var_to_var('u_omf')]
+    v_bkg = data[ncd.var_to_var('v_obs')] - data[ncd.var_to_var('v_omf')]
+    spd_b = (u_bkg**2 + v_bkg**2) ** (0.5)
+
+    val = spd_b
+    return(val)
+
+def spd_obs(data=None,return_deps=False):
+    deps = ['u_obs','v_obs']
+    spd_o = (data[ncd.var_to_var('u_obs')]**2 + data[ncd.var_to_var('v_obs')]**2) ** (0.5)
+
+    val = spd_o
+    return(val)
+
+def dir_fcst(data=None,return_deps=False):
+    deps = ['u_obs','v_obs','u_omf','v_omf']
+    u_bkg = data[ncd.var_to_var('u_obs')] - data[ncd.var_to_var('u_omf')]
+    v_bkg = data[ncd.var_to_var('v_obs')] - data[ncd.var_to_var('v_omf')]
+
+    spd_b = (u_bkg**2 + v_bkg**2) ** (0.5)
+    dir_b = spd_b*0.0 + 999.
+    msk = (spd_b > 0.0)
+    dir_b[msk] = np.arctan2(u_bkg[msk],v_bkg[msk]) * 180.0 / np.pi
+
+    val = dir_b
+    return(val)
+
+def dir_obs(data=None,return_deps=False):
+    deps = ['u_obs','v_obs']
+    u_obs = data[ncd.var_to_var('u_obs')]
+    v_obs = data[ncd.var_to_var('v_obs')]
+
+    spd_o = (u_obs**2 + v_obs**2) ** (0.5)
+    dir_o = spd_o * 0.0 + 999.
+    msk = (spd_o > 0.0)
+    dir_o[msk] = np.arctan2(u_obs[msk],v_obs[msk]) * 180.0 / np.pi
+    val = dir_o
+    return(val)
 
 def sigo_input(data=None,return_deps=False):
     deps = ['Errinv_Input']
