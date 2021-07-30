@@ -31,6 +31,36 @@ def plot_obs_map(cob,c=None, cmap='viridis', title=None,lat='lat',lon='lon',vmin
 # show plot
     plt.show()
 
+def plot_obs_map_ll(lon,lat,c=None, cmap='viridis', title=None,vmin=None,vmax=None):
+
+#   set projection
+    proj=ccrs.PlateCarree()
+
+#   initialize the plot pointing to the projection
+    ax = plt.axes(projection=proj)
+
+    if c is None: c='r'
+#    plot the data at x=lon, y=lat.  Note I've commented out shading the dots by
+#     the air_temp value, simply because it's easier to see red
+    ax.scatter(lon,lat,
+#           c=cob.v('air_temperature@ObsValue'),
+           c=c,
+           linewidth=0,
+           transform=proj,cmap=cmap,vmin=vmin,vmax=vmax)
+
+#plot globally
+    ax.set_global()
+
+# draw coastlines
+    ax.coastlines()
+
+    if title is not None:
+        ax.set_title(title)
+
+# show plot
+    plt.show()
+
+
 def plot_2d_hist(var1,var2,xbins=None,ybins=None,bins=40,cmin=None,cmax=None):
     if (xbins is None and ybins is not None) or (ybins is None and xbins is not None):
         raise ValueError('Currently wired for specification of both x & y bins')

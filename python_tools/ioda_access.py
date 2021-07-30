@@ -127,6 +127,7 @@ class obs():
 
 #        try:
 ##NCD            self.nc4 = nc4.Dataset(fn)
+        print(fn)
         self.gr = ioda.Engines.HH.openFile(
                           name = fn,
                           mode = ioda.Engines.BackendOpenModes.Read_Only)
