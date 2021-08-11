@@ -1,6 +1,7 @@
 import numpy as np
 import datetime as dt
 import netCDF4 as nc4
+import ioda_functions as iof
 import ncdiag_functions as ncf
 import ioda 
 
@@ -12,8 +13,8 @@ varmap = {
 #    'used':  'Analysis_Use_Flag',
     'pres':  'Pressure',
     'ob':    'Observation',
-    'obs':   'Observation',
-    'omf':   'Obs_Minus_Forecast_adjusted',
+#    'obs':   'Observation',
+#    'omf':   'Obs_Minus_Forecast_adjusted',
     'omfbc': 'Obs_Minus_Forecast_adjusted',
     'omfnbc':'Obs_Minus_Forecast_unadjusted',
     'oma':   'Obs_Minus_Analysis_adjusted',
@@ -61,6 +62,13 @@ varmap = {
 ##NCD     'ee':     'Height'}    # Note:  amv expected error is stored in Height
 
 derived_var = {
+    'obs':         {'func': iof.obs,          'deps': ['ObsValue/OBSVAR']}, 
+    'bkg':         {'func': iof.bkg,          'deps': ['hofx/OBSVAR']},
+    'omf':         {'func': iof.omf,          'deps': ['ObsValue/OBSVAR','hofx/OBSVAR']},
+    'gsibkgbc':    {'func': iof.gsibkgbc,     'deps': ['GsiHofXBc/OBSVAR']},
+    'gsiomfbc':    {'func': iof.gsiomfbc,     'deps': ['ObsValue/OBSVAR','GsiHofXBc/OBSVAR']},
+    'gsibkgnbc':    {'func': iof.gsibkgnbc,     'deps': ['GsiHofX/OBSVAR']},
+    'gsiomfnbc':    {'func': iof.gsiomfnbc,     'deps': ['ObsValue/OBSVAR','GsiHofX/OBSVAR']},
     'amb':         {'func': ncf.amb,          'deps': ['omf','oma']},
     'fcst':        {'func': ncf.fcst,         'deps': ['omf','obs']},
     'anl':         {'func': ncf.anl,          'deps': ['oma','obs']},
@@ -99,11 +107,14 @@ stats = {
     'cpen':        {'func': ncf.cpen,         'deps': ['sigo']} ,
     'rms':         {'func': ncf.rms,          'deps': None} }
 
-def var_to_var(in_var):
+def var_to_var(in_var,obs_var=None):
     if (in_var in varmap):
         var = varmap[in_var]
     else:
         var = in_var
+
+    if obs_var is not None:
+        var = var.replace('OBSVAR',obs_var)
     return(var)
 
 #ef iodavar_to_groupvar(in_ioda_var):
@@ -143,8 +154,8 @@ class obs():
                       'date': date   ,
                       'centroid_lat': None,
                       'centroid_lon': None}
-        for key in derived_var:
-            self.data[key] = None
+#        for key in derived_var:
+#            self.data[key] = None
 
         self.centroid_calculated = False
         
@@ -159,6 +170,11 @@ class obs():
             self.set_mask(mask)
 
         self.mask_enabled = None
+
+        self.obs_var = None
+
+    def set_obs_var(self, var):
+        self.obs_var = var
 
     def set_centroid(self, lon, lat):
         self.data['centroid_lon'] = lon
@@ -179,6 +195,8 @@ class obs():
                 if (self.reallyverbose): print('field: ',fld)
                 cur = self.v(fld)
                 newlogic = newlogic.replace(fld,'self.data[\'{}\']'.format(var_to_var(fld)))
+
+            newlogic = newlogic.replace('OBSVAR',self.obs_var)
 
             if (self.reallyverbose): print(newlogic)
 
@@ -204,8 +222,8 @@ class obs():
                 vars = [in_var]
     
             for cvar in vars:
-                var = var_to_var(cvar)
-                
+                var = var_to_var(cvar,obs_var=self.obs_var)
+                print(var,self.obs_var)
     #            try:
                 if (var not in self.data):##NCD and var in self.nc4.variables):
 ##NCD                    self.data[var] = self.nc4.variables[var][...]
@@ -213,15 +231,22 @@ class obs():
     #            except:
     #                raise ValueError('Field {} not in file'.format(var))
     
-            var = var_to_var(in_var)
-            
-            if (derived and self.data[var] is None):
-                self.data[var] = derived_var[var]['func'](data=self.data)
-    
-            if (msk):
-                return(self.data[var][self.mask])
+            var = var_to_var(in_var,obs_var=self.obs_var)
+
+            if (derived):
+                dvar = var+'/'+self.obs_var       
             else:
-                return(self.data[var])
+                dvar = var 
+            print(dvar in self.data)
+#            if (derived and self.data[dvar] is None):
+            if (derived and dvar not in self.data):
+                self.data[dvar] = derived_var[var]['func'](data=self.data,obs_var=self.obs_var)
+                
+            print(var)
+            if (msk):
+                return(self.data[dvar][self.mask])
+            else:
+                return(self.data[dvar])
 
         else:
             return(None)
