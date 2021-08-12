@@ -8,11 +8,20 @@ import ioda
 varmap = {
     'lat':   'MetaData/latitude'         ,
     'lon':   'MetaData/longitude'        ,
-    'kx':     'Observation_Type' ,
+    'kx':     'ObsType/OBSVAR' ,
     'subtype':'Observation_Subtype',
+    'sigo':   'EffectiveError/OBSVAR',
 #    'used':  'Analysis_Use_Flag',
+    'used':  'EffectiveQC/OBSVAR',
+    'gsiused': 'GsiUseFlag/OBSVAR',
     'pres':  'Pressure',
-    'ob':    'Observation',
+    'obs':    'ObsValue/OBSVAR',
+    'ob':    'ObsValue/OBSVAR',
+    'bkg':   'hofx/OBSVAR',
+    'fcst':  'hofx/OBSVAR',
+    'gsibkg': 'GsiHofXBc/OBSVAR',
+    'gsibkgbc': 'GsiHofXBc/OBSVAR',
+    'gsibkgnbc': 'GsiHofX/OBSVAR',
 #    'obs':   'Observation',
 #    'omf':   'Obs_Minus_Forecast_adjusted',
     'omfbc': 'Obs_Minus_Forecast_adjusted',
@@ -62,20 +71,20 @@ varmap = {
 ##NCD     'ee':     'Height'}    # Note:  amv expected error is stored in Height
 
 derived_var = {
-    'obs':         {'func': iof.obs,          'deps': ['ObsValue/OBSVAR']}, 
-    'bkg':         {'func': iof.bkg,          'deps': ['hofx/OBSVAR']},
+#    'obs':         {'func': iof.obs,          'deps': ['ObsValue/OBSVAR']}, 
+#    'bkg':         {'func': iof.bkg,          'deps': ['hofx/OBSVAR']},
     'omf':         {'func': iof.omf,          'deps': ['ObsValue/OBSVAR','hofx/OBSVAR']},
-    'gsibkgbc':    {'func': iof.gsibkgbc,     'deps': ['GsiHofXBc/OBSVAR']},
+#    'gsibkgbc':    {'func': iof.gsibkgbc,     'deps': ['GsiHofXBc/OBSVAR']},
     'gsiomfbc':    {'func': iof.gsiomfbc,     'deps': ['ObsValue/OBSVAR','GsiHofXBc/OBSVAR']},
-    'gsibkgnbc':    {'func': iof.gsibkgnbc,     'deps': ['GsiHofX/OBSVAR']},
+#    'gsibkgnbc':    {'func': iof.gsibkgnbc,     'deps': ['GsiHofX/OBSVAR']},
     'gsiomfnbc':    {'func': iof.gsiomfnbc,     'deps': ['ObsValue/OBSVAR','GsiHofX/OBSVAR']},
     'amb':         {'func': ncf.amb,          'deps': ['omf','oma']},
-    'fcst':        {'func': ncf.fcst,         'deps': ['omf','obs']},
+#    'fcst':        {'func': ncf.fcst,         'deps': ['omf','obs']},
     'anl':         {'func': ncf.anl,          'deps': ['oma','obs']},
     'bc':          {'func': ncf.bc,           'deps': ['omfbc','omfnbc']},
-    'sigo_input':  {'func': ncf.sigo_input,   'deps': ['Errinv_Input']},
-    'sigo_final':  {'func': ncf.sigo_final,   'deps': ['Errinv_Final']},
-    'sigo':        {'func': ncf.sigo,         'deps': ['Errinv_Final','Inverse_Observation_Error']},
+#    'sigo_input':  {'func': ncf.sigo_input,   'deps': ['Errinv_Input']},
+#    'sigo_final':  {'func': ncf.sigo_final,   'deps': ['Errinv_Final']},
+#    'sigo':        {'func': ncf.sigo,         'deps': ['Errinv_Final','Inverse_Observation_Error']},
     'dist':        {'func': ncf.dist,         'deps': ['lon','lat']},
     'rand':        {'func': ncf.rand,         'deps': ['lon']},
     'station':     {'func': ncf.station,      'deps': ['Station_ID']},
@@ -86,7 +95,7 @@ derived_var = {
     'dir_fcst':    {'func': ncf.dir_fcst,     'deps': ['u_obs','v_obs','u_omf','v_omf']},
     'qifn':        {'func': ncf.qifn,         'deps': ['Station_Elevation']},
     'qify':        {'func': ncf.qify,         'deps': ['Station_Elevation']},
-    'used':        {'func': ncf.used,         'deps': ['use_flag','Analysis_Use_Flag','QC_Flag','Channel_Index']},
+#    'used':        {'func': ncf.used,         'deps': ['use_flag','Analysis_Use_Flag','QC_Flag','Channel_Index']},
     'aeolus_cor':  {'func': ncf.aeolus_cor,   'deps': ['Retrieval_Pressure','Pressure','Deriv_Wind_wrt_Pressure',
                                                        'Retrieval_Temperature','Background_Temperature','Deriv_Wind_wrt_Temperature']},
     'sens':        {'func': ncf.sens,         'deps': ['ObsDiagSave_obssen','ObsDiagSave_nldepart']},
@@ -138,7 +147,7 @@ class obs():
 
 #        try:
 ##NCD            self.nc4 = nc4.Dataset(fn)
-        print(fn)
+        if (self.reallyverbose): print(fn)
         self.gr = ioda.Engines.HH.openFile(
                           name = fn,
                           mode = ioda.Engines.BackendOpenModes.Read_Only)
@@ -223,7 +232,7 @@ class obs():
     
             for cvar in vars:
                 var = var_to_var(cvar,obs_var=self.obs_var)
-                print(var,self.obs_var)
+                if (self.reallyverbose): print(var,self.obs_var)
     #            try:
                 if (var not in self.data):##NCD and var in self.nc4.variables):
 ##NCD                    self.data[var] = self.nc4.variables[var][...]
@@ -237,12 +246,12 @@ class obs():
                 dvar = var+'/'+self.obs_var       
             else:
                 dvar = var 
-            print(dvar in self.data)
+            if self.reallyverbose: print(dvar in self.data)
 #            if (derived and self.data[dvar] is None):
             if (derived and dvar not in self.data):
                 self.data[dvar] = derived_var[var]['func'](data=self.data,obs_var=self.obs_var)
                 
-            print(var)
+            if self.reallyverbose: print(var)
             if (msk):
                 return(self.data[dvar][self.mask])
             else:
