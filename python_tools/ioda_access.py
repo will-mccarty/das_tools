@@ -2,7 +2,6 @@ import numpy as np
 import datetime as dt
 import netCDF4 as nc4
 import ioda_functions as iof
-import ncdiag_functions as ncf
 import ioda 
 
 varmap = {
@@ -11,10 +10,9 @@ varmap = {
     'kx':     'ObsType/OBSVAR' ,
     'subtype':'Observation_Subtype',
     'sigo':   'EffectiveError/OBSVAR',
-#    'used':  'Analysis_Use_Flag',
     'used':  'EffectiveQC/OBSVAR',
     'gsiused': 'GsiUseFlag/OBSVAR',
-    'pres':  'Pressure',
+    'pres':  'MetaData/air_pressure',
     'obs':    'ObsValue/OBSVAR',
     'ob':    'ObsValue/OBSVAR',
     'bkg':   'hofx/OBSVAR',
@@ -22,99 +20,22 @@ varmap = {
     'gsibkg': 'GsiHofXBc/OBSVAR',
     'gsibkgbc': 'GsiHofXBc/OBSVAR',
     'gsibkgnbc': 'GsiHofX/OBSVAR',
-#    'obs':   'Observation',
-#    'omf':   'Obs_Minus_Forecast_adjusted',
-    'omfbc': 'Obs_Minus_Forecast_adjusted',
-    'omfnbc':'Obs_Minus_Forecast_unadjusted',
-    'oma':   'Obs_Minus_Analysis_adjusted',
-    'omabc': 'Obs_Minus_Analysis_adjusted',
-    'omanbc':'Obs_Minus_Analysis_unadjusted',
-    'u_obs':  'u_Observation',
-    'u_omf':   'u_Obs_Minus_Forecast_adjusted',
-    'u_omfbc': 'u_Obs_Minus_Forecast_adjusted',
-    'u_omfnbc':'u_Obs_Minus_Forecast_unadjusted',
-    'v_obs':  'v_Observation',
-    'v_omf':   'v_Obs_Minus_Forecast_adjusted',
-    'v_omfbc': 'v_Obs_Minus_Forecast_adjusted',
-    'v_omfnbc':'v_Obs_Minus_Forecast_unadjusted',
-    'ichan': 'Channel_Index',
-    'qcmark': 'QC_Flag',
-    'chused': 'use_flag',
-    'ee':     'Height'}    # Note:  amv expected error is stored in Height
-
-##NCD varmap = { 
-##NCD     'lat':   'Latitude'         ,
-##NCD     'lon':   'Longitude'        ,
-##NCD     'kx':     'Observation_Type' ,
-##NCD     'subtype':'Observation_Subtype', 
-##NCD #    'used':  'Analysis_Use_Flag',
-##NCD     'pres':  'Pressure',
-##NCD     'ob':    'Observation',
-##NCD     'obs':   'Observation',
-##NCD     'omf':   'Obs_Minus_Forecast_adjusted',
-##NCD     'omfbc': 'Obs_Minus_Forecast_adjusted',
-##NCD     'omfnbc':'Obs_Minus_Forecast_unadjusted',
-##NCD     'oma':   'Obs_Minus_Analysis_adjusted',
-##NCD     'omabc': 'Obs_Minus_Analysis_adjusted',
-##NCD     'omanbc':'Obs_Minus_Analysis_unadjusted',
-##NCD     'u_obs':  'u_Observation',
-##NCD     'u_omf':   'u_Obs_Minus_Forecast_adjusted',
-##NCD     'u_omfbc': 'u_Obs_Minus_Forecast_adjusted',
-##NCD     'u_omfnbc':'u_Obs_Minus_Forecast_unadjusted',
-##NCD     'v_obs':  'v_Observation',
-##NCD     'v_omf':   'v_Obs_Minus_Forecast_adjusted',
-##NCD     'v_omfbc': 'v_Obs_Minus_Forecast_adjusted',
-##NCD     'v_omfnbc':'v_Obs_Minus_Forecast_unadjusted',
-##NCD     'ichan': 'Channel_Index',
-##NCD     'qcmark': 'QC_Flag',
-##NCD     'chused': 'use_flag',
-##NCD     'ee':     'Height'}    # Note:  amv expected error is stored in Height
+     }
 
 derived_var = {
-#    'obs':         {'func': iof.obs,          'deps': ['ObsValue/OBSVAR']}, 
-#    'bkg':         {'func': iof.bkg,          'deps': ['hofx/OBSVAR']},
     'omf':         {'func': iof.omf,          'deps': ['ObsValue/OBSVAR','hofx/OBSVAR']},
-#    'gsibkgbc':    {'func': iof.gsibkgbc,     'deps': ['GsiHofXBc/OBSVAR']},
     'gsiomfbc':    {'func': iof.gsiomfbc,     'deps': ['ObsValue/OBSVAR','GsiHofXBc/OBSVAR']},
-#    'gsibkgnbc':    {'func': iof.gsibkgnbc,     'deps': ['GsiHofX/OBSVAR']},
     'gsiomfnbc':    {'func': iof.gsiomfnbc,     'deps': ['ObsValue/OBSVAR','GsiHofX/OBSVAR']},
-    'amb':         {'func': ncf.amb,          'deps': ['omf','oma']},
-#    'fcst':        {'func': ncf.fcst,         'deps': ['omf','obs']},
-    'anl':         {'func': ncf.anl,          'deps': ['oma','obs']},
-    'bc':          {'func': ncf.bc,           'deps': ['omfbc','omfnbc']},
-#    'sigo_input':  {'func': ncf.sigo_input,   'deps': ['Errinv_Input']},
-#    'sigo_final':  {'func': ncf.sigo_final,   'deps': ['Errinv_Final']},
-#    'sigo':        {'func': ncf.sigo,         'deps': ['Errinv_Final','Inverse_Observation_Error']},
-    'dist':        {'func': ncf.dist,         'deps': ['lon','lat']},
-    'rand':        {'func': ncf.rand,         'deps': ['lon']},
-    'station':     {'func': ncf.station,      'deps': ['Station_ID']},
-    'spd_obs':     {'func': ncf.spd_obs,      'deps': ['u_obs','v_obs']},
-    'spd_fcst':    {'func': ncf.spd_fcst,     'deps': ['u_obs','v_obs','u_omf','v_omf']},
-    'spd_omf':     {'func': ncf.spd_omf,      'deps': ['u_obs','v_obs','u_omf','v_omf']},
-    'dir_obs':     {'func': ncf.dir_obs,      'deps': ['u_obs','v_obs']},
-    'dir_fcst':    {'func': ncf.dir_fcst,     'deps': ['u_obs','v_obs','u_omf','v_omf']},
-    'qifn':        {'func': ncf.qifn,         'deps': ['Station_Elevation']},
-    'qify':        {'func': ncf.qify,         'deps': ['Station_Elevation']},
-#    'used':        {'func': ncf.used,         'deps': ['use_flag','Analysis_Use_Flag','QC_Flag','Channel_Index']},
-    'aeolus_cor':  {'func': ncf.aeolus_cor,   'deps': ['Retrieval_Pressure','Pressure','Deriv_Wind_wrt_Pressure',
-                                                       'Retrieval_Temperature','Background_Temperature','Deriv_Wind_wrt_Temperature']},
-    'sens':        {'func': ncf.sens,         'deps': ['ObsDiagSave_obssen','ObsDiagSave_nldepart']},
-    'u_sens':      {'func': ncf.u_sens,       'deps': ['u_ObsDiagSave_obssen','u_ObsDiagSave_nldepart']},
-    'v_sens':      {'func': ncf.v_sens,       'deps': ['v_ObsDiagSave_obssen','v_ObsDiagSave_nldepart']},
-    'uv_sens':     {'func': ncf.uv_sens,      'deps': ['u_ObsDiagSave_obssen','u_ObsDiagSave_nldepart', 'v_ObsDiagSave_obssen','v_ObsDiagSave_nldepart']},
-    'sens_used':   {'func': ncf.sens_used,    'deps': ['ObsDiagSave_iuse']},
-    'omfbyo':      {'func': ncf.omfbyo,       'deps': ['omf','obs']},
-    'omfbyf':      {'func': ncf.omfbyf,       'deps': ['omf','obs']}
     }
 
 stats = {
     'mean':        {'func': np.mean,          'deps': None} ,
-    'absmean':     {'func': ncf.absmean,      'deps': None} ,
+    'absmean':     {'func': iof.absmean,      'deps': None} ,
     'std':         {'func': np.std,           'deps': None} ,
     'count':       {'func': len,              'deps': None} ,
     'sum':         {'func': np.sum,           'deps': None} ,
-    'cpen':        {'func': ncf.cpen,         'deps': ['sigo']} ,
-    'rms':         {'func': ncf.rms,          'deps': None} }
+    'cpen':        {'func': iof.cpen,         'deps': ['sigo']} ,
+    'rms':         {'func': iof.rms,          'deps': None} }
 
 def var_to_var(in_var,obs_var=None):
     if (in_var in varmap):
@@ -205,7 +126,10 @@ class obs():
                 cur = self.v(fld)
                 newlogic = newlogic.replace(fld,'self.data[\'{}\']'.format(var_to_var(fld)))
 
-            newlogic = newlogic.replace('OBSVAR',self.obs_var)
+            try:
+                newlogic = newlogic.replace('OBSVAR',self.obs_var)
+            except:
+                print('Warning - no observation variable set (e.g. ia.set_obs_var(\'air_temperature\')')
 
             if (self.reallyverbose): print(newlogic)
 
@@ -270,7 +194,7 @@ class obs():
             msk = masked
  
         dep_dict = {}
-
+        
         if stats[stat]['deps'] is not None:
             for dep in stats[stat]['deps']:
                 dep_dict[dep] = self.v(dep,masked=msk)
@@ -304,6 +228,7 @@ class obs_template(obs):
         self.obdict = {}
 
         self.data = {}
+        self.obs_var = None
 
     def set_mask(self, logic):
         self.mask_logic = logic
@@ -367,6 +292,9 @@ class obs_template(obs):
             if fn not in self.obdict: 
                 if self.verbose: print('Opening {}'.format(fn))
                 self.obdict[fn] = obs(fn,date=dt,verbose=self.verbose, reallyverbose=self.reallyverbose, in_data=self.data)
+
+            self.obdict[fn].set_obs_var(self.obs_var)
+
             if msk is not None:
                 if self.verbose: print('setting mask on {} to {}'.format(fn,msk))
                 self.obdict[fn].set_mask(msk)
@@ -424,6 +352,8 @@ class obs_template(obs):
             if fn not in self.obdict:
                 if self.verbose: print('Opening {}'.format(fn))
                 self.obdict[fn] = obs(fn,date=dt,verbose=self.verbose, reallyverbose=self.reallyverbose, in_data=self.data)
+
+            self.obdict[fn].set_obs_var(self.obs_var)
             if msk is not None:
                 self.obdict[fn].set_mask(msk)
 

@@ -49,6 +49,13 @@ def omfbyf(data=None,return_deps=False):
 
 
 
+def sigobyf(data=None,return_deps=False):
+    deps = ['omf','obs','sigo']
+
+    val = data[ncd.var_to_var('sigo')] / (data[ncd.var_to_var('obs')] - data[ncd.var_to_var('omf')])
+    return(val)
+
+
 def sens(data=None,return_deps=False):
     deps = ['ObsDiagSave_obssen','ObsDiagSave_nldepart']
 
@@ -173,6 +180,14 @@ def sigo_input(data=None,return_deps=False):
     deps = ['Errinv_Input']
 
     val = 1.0 / data['Errinv_Input']
+    msk = val > 9999.
+    val[msk] = -9999.9
+    return(val)
+
+def sigo_adjust(data=None,return_deps=False):
+    deps = ['Errinv_Adjust']
+
+    val = 1.0 / data['Errinv_Adjust']
     msk = val > 9999.
     val[msk] = -9999.9
     return(val)

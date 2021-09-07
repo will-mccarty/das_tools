@@ -72,26 +72,26 @@ def plot_2d_hist(var1,var2,xbins=None,ybins=None,bins=40,cmin=None,cmax=None):
     h, xedge, yedge, im  = plt.hist2d(var1,var2,bins=bins,cmin=cmin,cmax=cmax)
     plt.show()
 
-def plot_spatial_gauss_hist(lons,lats,deltalat=1.0,cb_label='Count',fn=None,vmin=None,vmax=None,cmap='plasma'):
+def plot_spatial_gauss_hist(lons,lats,deltalat=1.0,cb_label='Count',fn=None,vmin=None,vmax=None,cmap='plasma',maskzero=None):
     from gmao_tools import gauss_spatial_hist, gauss_spatial_hist_to_grid
 
     hlon, hlat, h, dlons =  gauss_spatial_hist(lons,lats,deltalat=deltalat)
 
     lons_new,lats_new,hnew = gauss_spatial_hist_to_grid(hlon,hlat,dlons, h, deltalat=deltalat)
 
-    plot_spatial_gauss(lons_new,lats_new,hnew,cb_label=cb_label,fn=fn,vmin=vmin,vmax=vmax,cmap=cmap)
+    plot_spatial_gauss(lons_new,lats_new,hnew,cb_label=cb_label,fn=fn,vmin=vmin,vmax=vmax,cmap=cmap,maskzero=maskzero)
 
 
-def plot_spatial_gauss_sum(lons,lats,val,deltalat=1.0,cb_label='Sum',fn=None,vmin=None,vmax=None,cmap='plasma'):
+def plot_spatial_gauss_sum(lons,lats,val,deltalat=1.0,cb_label='Sum',fn=None,vmin=None,vmax=None,cmap='plasma',maskzero=None):
     from gmao_tools import gauss_spatial_sum, gauss_spatial_hist_to_grid
 
     hlon, hlat, h, dlons =  gauss_spatial_sum(lons,lats,val,deltalat=deltalat)
 
     lons_new,lats_new,hnew = gauss_spatial_hist_to_grid(hlon,hlat,dlons, h, deltalat=deltalat)
 
-    plot_spatial_gauss(lons_new,lats_new,hnew,cb_label=cb_label,fn=fn,vmin=vmin,vmax=vmax,cmap=cmap)
+    plot_spatial_gauss(lons_new,lats_new,hnew,cb_label=cb_label,fn=fn,vmin=vmin,vmax=vmax,cmap=cmap,maskzero=maskzero)
 
-def plot_spatial_gauss_mean(lons,lats,val,deltalat=1.0,cb_label='Mean',fn=None,vmin=None,vmax=None,cmap='plasma'):
+def plot_spatial_gauss_mean(lons,lats,val,deltalat=1.0,cb_label='Mean',fn=None,vmin=None,vmax=None,cmap='plasma',maskzero=None):
     from gmao_tools import gauss_spatial_sum, gauss_spatial_hist, gauss_spatial_hist_to_grid
 
     hlon, hlat, s, dlons =  gauss_spatial_sum(lons,lats,val,deltalat=deltalat)
@@ -101,15 +101,18 @@ def plot_spatial_gauss_mean(lons,lats,val,deltalat=1.0,cb_label='Mean',fn=None,v
 
     lons_new,lats_new,hnew = gauss_spatial_hist_to_grid(hlon,hlat,dlons, h, deltalat=deltalat)
 
-    plot_spatial_gauss(lons_new,lats_new,hnew,cb_label=cb_label,fn=fn,vmin=vmin,vmax=vmax,cmap=cmap)
+    plot_spatial_gauss(lons_new,lats_new,hnew,cb_label=cb_label,fn=fn,vmin=vmin,vmax=vmax,cmap=cmap,maskzero=maskzero)
 
 
-def plot_spatial_gauss(lons_new,lats_new,hnew,cb_label='',fn=None,vmin=None,vmax=None,cb_labelsize=15,cmap='plasma',suptitle=None):
+def plot_spatial_gauss(lons_new,lats_new,hnew,cb_label='',fn=None,vmin=None,vmax=None,cb_labelsize=15,cmap='plasma',suptitle=None,maskzero=None):
 
     fig = plt.figure(figsize=(15,5))
     if vmin is None: vmin = np.min(hnew)
     if vmax is None: vmax = np.max(hnew)
     
+    if maskzero is not None:
+        hnew = hnew * (hnew/hnew)
+
     col='black'
     
     fig = plt.figure(figsize=(6.25,6))

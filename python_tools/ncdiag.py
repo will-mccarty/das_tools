@@ -38,6 +38,7 @@ derived_var = {
     'bc':          {'func': ncf.bc,           'deps': ['omfbc','omfnbc']},
     'sigo_input':  {'func': ncf.sigo_input,   'deps': ['Errinv_Input']},
     'sigo_final':  {'func': ncf.sigo_final,   'deps': ['Errinv_Final']},
+    'sigo_adjust':  {'func': ncf.sigo_adjust,   'deps': ['Errinv_Adjust']},
     'sigo':        {'func': ncf.sigo,         'deps': ['Errinv_Final','Inverse_Observation_Error']},
     'dist':        {'func': ncf.dist,         'deps': ['lon','lat']},
     'rand':        {'func': ncf.rand,         'deps': ['lon']},
@@ -58,7 +59,8 @@ derived_var = {
     'uv_sens':     {'func': ncf.uv_sens,      'deps': ['u_ObsDiagSave_obssen','u_ObsDiagSave_nldepart', 'v_ObsDiagSave_obssen','v_ObsDiagSave_nldepart']},
     'sens_used':   {'func': ncf.sens_used,    'deps': ['ObsDiagSave_iuse']},
     'omfbyo':      {'func': ncf.omfbyo,       'deps': ['omf','obs']},
-    'omfbyf':      {'func': ncf.omfbyf,       'deps': ['omf','obs']}
+    'omfbyf':      {'func': ncf.omfbyf,       'deps': ['omf','obs']},
+#    'sigobyf':      {'func': ncf.sigobyf,       'deps': ['omf','obs','sigo']}
     }
 
 stats = {
