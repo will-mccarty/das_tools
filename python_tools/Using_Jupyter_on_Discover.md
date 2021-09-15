@@ -21,6 +21,13 @@ Then in putty, add the port forward to
 
 You will need to have both ports open (that is, one nccs login window that creates the connection to thunder, and a putty window that creates the connection to thunder.
 
+# Note on tunnels
+If you're having trouble connecting the tunnel on discover, it might already exist.  You may need to kill the tunnels by hand.  A quick and easy way to list all the running tunnels is by running:
+```
+discover>   ~wrmccart/bin/list-sshtunnels.csh
+```
+You may need to ssh to the listed node and kill the ssh jobs.
+
 # Start jupyter
 
 On discover in the same window running the ssh port forward, first load an Anaconda module, e.g.:
