@@ -51,6 +51,11 @@ source /gpfsm/dnb31/drholdaw/JediDev/fv3-bundle/develop/build-intel-impi-release
 ```
 (and hope Dan's build doesn't move)
 
+### *Optional*:  If you have a conda environment that you'd like to use, now is the time to activate it:
+```
+conda activate envname
+```
+
 ### Finally, start jupyer *without a browser*
 ```
 jupyter notebook --no-browser --port=32123
