@@ -2,7 +2,7 @@ These are my quick notes/instructions for using jupyter notebooks on discover:
 
 # Create a ssh tunnel
 
-First, pick a 5-digit port number.  For this example, I will use 32123, but you should pick one unique to you.  What we need to do is open a port from your machine to discover.  However, you cannot do this in the forward direction.  What we do is open a 'reverse' port forward.  
+First, pick a 5-digit port number less than 65535.  For this example, I will use 32123, but you should pick one unique to you.  What we need to do is open a port from your machine to discover.  However, you cannot do this in the forward direction.  What we do is open a 'reverse' port forward.  
 
 Mac:  You need to create a 'reverse' port tunnel from discover to your laptop:
 ```
