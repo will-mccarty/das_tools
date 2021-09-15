@@ -22,7 +22,7 @@ Then in putty, add the port forward to
 You will need to have both ports open (that is, one nccs login window that creates the connection to thunder, and a putty window that creates the connection to thunder.
 
 # Note on tunnels
-If you're having trouble connecting the tunnel on discover, it might already exist.  You may need to kill the tunnels by hand.  A quick and easy way to list all the running tunnels is by running:
+If you're having trouble connecting the tunnel on discover, it might already exist.  Unfortunately, you can only have one tunnel going at a time.  You may need to kill the tunnels by hand.  A quick and easy way to list all the running tunnels is by running:
 ```
 discover>   ~wrmccart/bin/list-sshtunnels.csh
 ```
