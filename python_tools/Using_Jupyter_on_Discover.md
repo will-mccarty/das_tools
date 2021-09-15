@@ -23,7 +23,7 @@ You will need to have both ports open (that is, one nccs login window that creat
 
 # Start jupyter
 
-On discover, first load an Anaconda module, e.g.:
+On discover in the same window running the ssh port forward, first load an Anaconda module, e.g.:
 ```
 module load python/GEOSpyD/Ana2019.10_py3.7
 ```
