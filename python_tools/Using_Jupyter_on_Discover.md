@@ -8,10 +8,14 @@ Mac:  You need to create a 'reverse' port tunnel from discover to your laptop:
 ```
 discover>    ssh -Y -N -R 32123:localhost:32123 userid@mylaptop.gsfc.nasa.gov &
 ```
+(note:  the ssh connection is running in the background; press enter and you should have another command prompt)
+
 Windows: You cannot ssh directly into a Windows laptop.  Thus, we'll reverse open the port from discover to thunder.gsfc.nasa.gov, and then we will open the port from your laptop to thunder.  This creates a two-hop port forward.
 ```
 discover>    ssh -Y -N -R  32123:localhost:32123 userid@thunder.gsfc.nasa.gov &
 ```
+(note:  the ssh connection is running in the background; press enter and you should have another command prompt)
+
 Then in putty, add the port forward to 
 ![putty_screenshot.png](putty_screenshot.png)
 
