@@ -12,6 +12,7 @@ Windows: You cannot ssh directly into a Windows laptop.  Thus, we'll reverse ope
 ```
 discover>   ssh -N -f -R 32123:localhost:32123 userid@thunder.gsfc.nasa.gov
 ```
-
+Then in putty, add the port forward to 
+![putty_screenshot.png](putty_screenshot.png)
 
 
