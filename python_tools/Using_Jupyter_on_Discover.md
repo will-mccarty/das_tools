@@ -6,13 +6,13 @@ First, pick a 5-digit port number.  For this example, I will use 32123, but you 
 
 Mac:  You need to create a 'reverse' port tunnel from discover to your laptop:
 ```
-discover>    ssh -Y -N -R 32123:localhost:32123 userid@mylaptop.gsfc.nasa.gov &
+discover>    ssh -Y -N -R 32123:localhost:32123 USERID@mylaptop.gsfc.nasa.gov &
 ```
 (note:  the ssh connection is running in the background; press enter and you should have another command prompt)
 
 Windows: You cannot ssh directly into a Windows laptop.  Thus, we'll reverse open the port from discover to thunder.gsfc.nasa.gov, and then we will open the port from your laptop to thunder.  This creates a two-hop port forward.
 ```
-discover>    ssh -Y -N -R  32123:localhost:32123 userid@thunder.gsfc.nasa.gov &
+discover>    ssh -Y -N -R  32123:localhost:32123 USERID@thunder.gsfc.nasa.gov &
 ```
 (note:  the ssh connection is running in the background; press enter and you should have another command prompt)
 
@@ -36,7 +36,7 @@ module load python/GEOSpyD/Ana2019.10_py3.7
 ```
 Next, change to your directory that you want to be your 'starting' directory; I ususally use my nobackup space
 ```
-cd /discover/nobackup/userid/
+cd /discover/nobackup/USERID/
 ```
 ### *Optional*:  If you're going to want to use the tools in this repository, you'll need to:
 ```
