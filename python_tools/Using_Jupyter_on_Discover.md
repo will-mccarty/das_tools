@@ -38,8 +38,20 @@ Next, change to your directory that you want to be your 'starting' directory; I 
 ```
 cd /discover/nobackup/userid/
 ```
+### *Optional*:  If you're going to want to use the tools in this repository, you'll need to:
+```
+setenv PYTHONPATH /path/to/checkout/das_tools/python_tools/:$PYTHONTOOLS
+```
 
-Finally, start jupyer *without a browser*
+### *Optional*:  If you'll want to use the IODA Access tool in this repository, you'll need to:
+```
+setenv PYTHONPATH /path/to/checkout/das_tools/python_tools/:$PYTHONTOOLS
+setenv PYTHONPATH /gpfsm/dnb31/drholdaw/JediDev/fv3-bundle/develop/build-intel-impi-release-fv3/lib/python3.8/:$PYTHONPATH
+source /gpfsm/dnb31/drholdaw/JediDev/fv3-bundle/develop/build-intel-impi-release-fv3/modules.csh
+```
+(and hope Dan's build doesn't move)
+
+### Finally, start jupyer *without a browser*
 ```
 jupyter notebook --no-browser --port=32123
 ```
