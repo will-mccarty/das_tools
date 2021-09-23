@@ -1,0 +1,9 @@
+column_bins_max: [95000., 85000., 75000., 65000., 55000., 45000., 35000., 25000.,15000.]
+column_bins_min: [105000.,  95000.,  85000.,  75000.,  65000.,  55000.,  45000.,  35000.,  25000.]
+column_variable: 'pres'
+row_major_variable: 'kx'  
+row_minor_variable: 
+row_major_bin: 'unique'
+row_minor_bin: 'unique'
+row_stat: ['count','mean','std','cpen']
+stat_var: 'omf'

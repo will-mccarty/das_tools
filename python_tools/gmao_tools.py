@@ -207,3 +207,84 @@ def obs_diff_and_bars(stat,var,ctl,exp,minsample=0):
     }  
 
     return(dict)
+
+
+
+def summary_table(data,config,in_msk=None,verbose=False):
+    import pandas as pd
+    
+    if (in_msk is None):
+        data.use_mask(False)
+    else:
+        data.set_mask(in_msk)
+        data.use_mask(True)
+    
+    if (config['row_major_bin'] == 'unique'):
+        row_major = np.unique(data.v( config['row_major_variable']))
+    else:
+        row_major = config['row_major_bin']
+        
+    df = pd.DataFrame()
+    col_order = []
+    
+    init_loop = True
+    
+    for crow_major in row_major:
+        major_msk = '({} == {})'.format(config['row_major_variable'], crow_major)
+        doSub = config['row_minor_variable'] is not None
+        # insert logic for subtypes here
+        
+        if doSub:
+            nothing = None
+            #set mask here
+        else:
+            msk = major_msk
+                        
+        for stat in config['row_stat']:
+            cdict = {config['row_major_variable']: crow_major ,
+                     'stat': stat}
+            if (init_loop): col_order.append(config['row_major_variable'])
+            
+            if config['row_minor_variable'] is not None: 
+                cdict[ config['row_minor_variable'] ] = None
+                if (init_loop): col_order.append( config['row_minor_variable'] )
+                #update for minor var
+                
+            if (init_loop): col_order.append('stat')
+
+            for cmin, cmax in zip(config['column_bins_min'],config['column_bins_max']):
+                clabel = '{} - {}'.format(cmin,cmax)
+                if (init_loop): col_order.append( clabel )
+                col_msk = '({} <= {}) & ({} > {})'.format(config['column_variable'], cmin, config['column_variable'], cmax)
+                total_msk = ''
+                if (in_msk is not None):
+                    total_msk = in_msk + ' & ' 
+                total_msk = total_msk + major_msk + ' & ' + col_msk
+                
+                if (verbose): print(total_msk)
+                data.set_mask(total_msk)
+                data.use_mask(True)
+                
+                cdict[clabel] = data.stat(stat, config['stat_var'])
+                
+            init_loop = False
+            df = df.append(cdict, ignore_index = True)
+
+                
+#             cdf = pd.DataFrame(data=cdict)
+            
+#             if df is None:
+#                 cdf = df
+#             else:
+#                 df = df.append(cdf)
+    df = df[col_order]
+    return(df)
+
+
+def yaml_to_dict(filename):
+    import yaml
+
+    with open(filename) as file:
+        documents = yaml.full_load(file)
+
+    return(documents)
