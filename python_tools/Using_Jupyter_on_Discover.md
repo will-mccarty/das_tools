@@ -45,7 +45,7 @@ setenv PYTHONPATH /path/to/checkout/das_tools/python_tools/:$PYTHONTOOLS
 
 ### *Optional*:  If you'll want to use the IODA Access tool in this repository, you'll need to:
 ```
-setenv PYTHONPATH /path/to/checkout/das_tools/python_tools/:$PYTHONTOOLS
+setenv PYTHONPATH /path/to/checkout/das_tools/python_tools/:$PYTHONPATH
 setenv PYTHONPATH /gpfsm/dnb31/drholdaw/JediDev/fv3-bundle/develop/build-intel-impi-release-fv3/lib/python3.8/:$PYTHONPATH
 source /gpfsm/dnb31/drholdaw/JediDev/fv3-bundle/develop/build-intel-impi-release-fv3/modules.csh
 ```
