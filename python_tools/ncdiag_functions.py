@@ -47,6 +47,11 @@ def omfbyf(data=None,return_deps=False):
     val = data[ncd.var_to_var('omf')] / (data[ncd.var_to_var('obs')] - data[ncd.var_to_var('omf')])
     return(val)
 
+def angord(data=None,return_deps=False):
+    deps = ['BC_angord']
+
+    val = np.sum(data[ncd.var_to_var('BC_angord')],axis=1)
+    return(val)
 
 
 def sigobyf(data=None,return_deps=False):

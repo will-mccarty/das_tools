@@ -60,6 +60,7 @@ derived_var = {
     'sens_used':   {'func': ncf.sens_used,    'deps': ['ObsDiagSave_iuse']},
     'omfbyo':      {'func': ncf.omfbyo,       'deps': ['omf','obs']},
     'omfbyf':      {'func': ncf.omfbyf,       'deps': ['omf','obs']},
+    'angord':   {'func': ncf.angord,       'deps': ['BC_angord']},
 #    'sigobyf':      {'func': ncf.sigobyf,       'deps': ['omf','obs','sigo']}
     }
 
